@@ -2,15 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { ChevronDown, Trash2, Plus } from 'lucide-react';
-import { gateway } from '@ai-sdk/gateway';
-
-interface ModelInfo {
-  id: string;
-  name: string;
-  description?: string;
-  inputPrice: string;
-  outputPrice: string;
-}
+import { fetchAvailableModels, type ModelInfo } from '@/app/actions/models';
 
 interface Message {
   id: string;
@@ -54,25 +46,13 @@ export default function LLMTesterForm() {
     frequencyPenalty: { type: 'default' },
   });
 
-  // Fetch models from AI SDK
+  // Fetch models from Server Action
   useEffect(() => {
-    const fetchModels = async () => {
+    const loadModels = async () => {
       try {
         setLoading(true);
-        const { models } = await gateway.getAvailableModels();
-        
-        // Filter only language models and map to our ModelInfo format
-        const languageModels = models
-          .filter((model) => model.modelType === 'language')
-          .map((model) => ({
-            id: model.id,
-            name: model.name,
-            description: model.description || undefined,
-            inputPrice: model.pricing?.input || '0',
-            outputPrice: model.pricing?.output || '0',
-          }));
-
-        setModels(languageModels);
+        const models = await fetchAvailableModels();
+        setModels(models);
       } catch (err) {
         setError('Failed to fetch models. Please try again.');
         console.error(err);
@@ -81,7 +61,7 @@ export default function LLMTesterForm() {
       }
     };
 
-    fetchModels();
+    loadModels();
   }, []);
 
   // Get selected model object
