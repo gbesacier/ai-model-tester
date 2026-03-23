@@ -72,9 +72,6 @@ export default function Home() {
             {loading ? "Signing in..." : "Sign in"}
           </button>
         </form>
-        <p className="text-xs text-gray-500 mt-4">
-          No signup page (users are managed manually in the database).
-        </p>
       </div>
     </div>
   );
