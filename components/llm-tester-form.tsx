@@ -100,7 +100,7 @@ export default function LLMTesterForm() {
     setSelectedModelId(modelId);
     setModelSearchInput('');
     setShowModelDropdown(false);
-    const m = models.find((m) => m.id === selectedModelId)
+    const m = models.find((m) => m.id === modelId)
     if(m?.providers.length === 1) {
       setSelectedProvider(m?.providers[0].provider);
     }else{
