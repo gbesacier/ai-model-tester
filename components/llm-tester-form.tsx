@@ -240,6 +240,7 @@ export default function LLMTesterForm() {
                        • ${model.providers.length > 0 ? (Math.min(...model.providers.map((p) => p.inputPrice))).toFixed(4) : 'N/A'}
                        / ${model.providers.length > 0 ? (Math.min(...model.providers.map((p) => p.outputPrice))).toFixed(4) : 'N/A'} per M tokens
                        • Context: {model.providers.length > 0 ? (Math.max(...model.providers.map((p) => p.contextLength)) / 1000).toFixed(0) : 'N/A'}K tokens
+                       • {model.reasoning ? 'Reasoning' : 'Not Reasoning'}
                     </div>
                   </button>
                 ))}
@@ -282,6 +283,7 @@ export default function LLMTesterForm() {
                     <div className={styles.text.mutedSmallMt}>
                        ${p.inputPrice.toFixed(4)} / ${p.outputPrice.toFixed(4)} per M tokens
                        • Context: {(p.contextLength / 1000).toFixed(0)}K tokens
+                       • {currentModel.reasoning ? 'Reasoning' : 'Not Reasoning'}
                     </div>
                   </button>
                 ))}
