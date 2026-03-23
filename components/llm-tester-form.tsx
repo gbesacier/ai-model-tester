@@ -72,19 +72,8 @@ export default function LLMTesterForm() {
   const currentModel = models.find((m) => m.id === selectedModelId);
   const currentProvider = currentModel?.providers.find((p) => p.provider === selectedProvider);
 
-  // Filter all model-provider combinations based on search and context length
-  const filteredModels = useMemo(() => {
-    return models.filter((model) => {
-      const matchesSearch = model.name.toLowerCase().includes(modelSearchInput.toLowerCase());
-      const matchesContext = minContextLength ? Math.max(...model.providers.map((p) => p.contextLength)) >= minContextLength : true;
-      const matchesReasoning = !filterReasoning || model.reasoning;
-      return matchesSearch && matchesContext && matchesReasoning;
-    });
-  }, [models, modelSearchInput, minContextLength, filterReasoning]);
-
-  // Sort filtered models
   const sortedModels = useMemo(() => {
-    return [...filteredModels].sort((a, b) => {
+    return [...models].sort((a, b) => {
       if (modelSortBy === 'name') {
         return a.name.localeCompare(b.name);
       } else if (modelSortBy === 'price') {
@@ -95,7 +84,16 @@ export default function LLMTesterForm() {
         throw new Error('Invalid sort option');
       }
     })
-  }, [filteredModels, modelSortBy]);
+  }, [models, modelSortBy]);
+
+  const filteredModels = useMemo(() => {
+    return sortedModels.filter((model) => {
+      const matchesSearch = model.name.toLowerCase().includes(modelSearchInput.toLowerCase());
+      const matchesContext = minContextLength ? Math.max(...model.providers.map((p) => p.contextLength)) >= minContextLength : true;
+      const matchesReasoning = !filterReasoning || model.reasoning;
+      return matchesSearch && matchesContext && matchesReasoning;
+    });
+  }, [sortedModels, modelSearchInput, minContextLength, filterReasoning]);
 
   // Handle model selection
   const handleSelectModel = (modelId: string) => {
@@ -233,7 +231,7 @@ export default function LLMTesterForm() {
                 </button>
               </div>
               <div className={styles.container.dropdownContent}>
-                {sortedModels.map((model) => (
+                {filteredModels.map((model) => (
                   <button
                     key={model.id}
                     type="button"
@@ -250,7 +248,7 @@ export default function LLMTesterForm() {
                     </div>
                   </button>
                 ))}
-                {sortedModels.length === 0 && (
+                {filteredModels.length === 0 && (
                   <div className="px-4 py-3 text-gray-500 text-center">No models found</div>
                 )}
               </div>
