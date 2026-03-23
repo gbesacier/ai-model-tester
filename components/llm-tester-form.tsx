@@ -211,21 +211,21 @@ export default function LLMTesterForm() {
                 <button
                   type="button"
                   onClick={() => setModelSortBy('name')}
-                  className={modelSortBy === 'name' ? styles.button.sort : styles.button.sortInactive}
+                  className={modelSortBy === 'name' ? styles.button.filter : styles.button.filterInactive}
                 >
                   <ArrowDownAz /> Name
                 </button>
                 <button
                   type="button"
                   onClick={() => setModelSortBy('price')}
-                  className={modelSortBy === 'price' ? styles.button.sort : styles.button.sortInactive}
+                  className={modelSortBy === 'price' ? styles.button.filter : styles.button.filterInactive}
                 >
                   <ArrowDown01 /> Price
                 </button>
                 <button
                   type="button"
                   onClick={() => setFilterReasoning(!filterReasoning)}
-                  className={filterReasoning ? styles.button.sort : styles.button.sortInactive}
+                  className={filterReasoning ? styles.button.filter : styles.button.filterInactive}
                 >
                   Reasoning
                 </button>
@@ -370,7 +370,7 @@ export default function LLMTesterForm() {
                   <button
                     type="button"
                     onClick={() => deleteMessage(message.id)}
-                    className={styles.button.tertiary}
+                    className={styles.button.delete}
                   >
                     <Trash2 size={18} />
                   </button>
@@ -379,12 +379,12 @@ export default function LLMTesterForm() {
                 {message.role === 'assistant' && currentModel?.reasoning && (
                   <div>
                     <label className={styles.label.smallMuted}>
-                      Reasoning (optional)
+                      Reasoning
                     </label>
                     <textarea
                       value={message.reasoning || ''}
                       onChange={(e) => updateMessage(message.id, { reasoning: e.target.value })}
-                      placeholder="Internal reasoning (optional)..."
+                      placeholder="Internal reasoning..."
                       className={`${styles.input.textarea} min-h-16`}
                     />
                   </div>
