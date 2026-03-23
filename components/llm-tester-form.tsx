@@ -246,17 +246,7 @@ export default function LLMTesterForm() {
 
       {/* Conversation History Section */}
       <div className="space-y-3">
-        <div className="flex items-center justify-between">
-          <label className="block text-sm font-semibold text-gray-700">Conversation History</label>
-          <button
-            type="button"
-            onClick={addMessage}
-            className="flex items-center gap-2 px-3 py-1 text-sm bg-blue-600 text-white rounded hover:bg-blue-700 transition-colors"
-          >
-            <Plus size={16} />
-            Add Message
-          </button>
-        </div>
+        <label className="block text-sm font-semibold text-gray-700">Conversation History</label>
 
         <div className="space-y-3">
           {messages.length === 0 ? (
@@ -313,6 +303,17 @@ export default function LLMTesterForm() {
               </div>
             ))
           )}
+        </div>
+
+        <div className="flex justify-end">
+          <button
+            type="button"
+            onClick={addMessage}
+            className="flex items-center gap-2 px-3 py-1 text-sm bg-blue-600 text-white rounded hover:bg-blue-700 transition-colors"
+          >
+            <Plus size={16} />
+            Add Message
+          </button>
         </div>
       </div>
 
