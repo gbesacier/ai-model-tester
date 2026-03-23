@@ -305,7 +305,7 @@ export default function LLMTesterForm() {
         <div className={styles.container.sectionBase}>
           <div className={styles.container.infoCard}>
             <div>
-              <div className="text-sm font-medium text-gray-900">Model: <a href={`https://vercel.com/ai-gateway/models/${currentModel.name.split('/')[1]}`} target="_blank" rel="noopener noreferrer">{currentModel.name}</a> • Provider: {currentProvider.provider}</div>
+              <div className="text-sm font-medium text-gray-900">Model: <a href={`https://vercel.com/ai-gateway/models/${currentModel.id.split('/')[1]}`} target="_blank" rel="noopener noreferrer">{currentModel.name}</a> • Provider: {currentProvider.provider}</div>
               {currentModel.description && (
                 <div className="text-xs text-gray-600 mt-1">{currentModel.description}</div>
               )}
