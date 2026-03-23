@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import { ChevronDown, Trash2, Plus } from 'lucide-react';
 import { fetchAvailableModels, type ModelInfo } from '@/app/actions/models';
+import { styles } from '@/components/styles';
 
 interface Message {
   id: string;
@@ -137,24 +138,24 @@ export default function LLMTesterForm() {
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center p-8">
+      <div className={styles.loadingContainer}>
         <p className="text-gray-600">Loading models...</p>
       </div>
     );
   }
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-8">
-      {error && <div className="p-4 bg-red-50 text-red-700 rounded-lg">{error}</div>}
+    <form onSubmit={handleSubmit} className={styles.layout.form}>
+      {error && <div className={styles.error}>{error}</div>}
 
       {/* Model Selection Section */}
-      <div className="space-y-2">
-        <label className="block text-sm font-semibold text-gray-700">AI Model</label>
+      <div className={styles.container.sectionBase}>
+        <label className={styles.label.base}>AI Model</label>
         <div className="relative">
           <button
             type="button"
             onClick={() => setShowModelDropdown(!showModelDropdown)}
-            className="w-full px-4 py-2 text-left border border-gray-300 rounded-lg bg-white flex items-center justify-between hover:border-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500"
+            className={styles.button.dropdown}
           >
             <span>{selectedModel || 'Select a model...'}</span>
             <ChevronDown
@@ -164,18 +165,18 @@ export default function LLMTesterForm() {
           </button>
 
           {showModelDropdown && (
-            <div className="absolute top-full left-0 right-0 mt-1 bg-white border border-gray-300 rounded-lg shadow-lg z-10">
+            <div className={styles.container.dropdown}>
               <div className="p-2 border-b border-gray-200">
                 <input
                   type="text"
                   placeholder="Search models..."
                   value={modelSearchInput}
                   onChange={(e) => setModelSearchInput(e.target.value)}
-                  className="w-full px-3 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className={styles.input.search}
                   autoFocus
                 />
               </div>
-              <div className="max-h-64 overflow-y-auto">
+              <div className={styles.container.dropdownContent}>
                 {filteredModels.map((model) => (
                   <button
                     key={model.id}
@@ -184,7 +185,7 @@ export default function LLMTesterForm() {
                     className="w-full text-left px-4 py-3 hover:bg-blue-50 border-b border-gray-200 last:border-b-0 focus:outline-none focus:bg-blue-50"
                   >
                     <div className="font-medium text-gray-900">{model.name}</div>
-                    <div className="text-xs text-gray-500 mt-1">
+                    <div className={styles.text.mutedSmallMt}>
                       {model.id} • ${model.inputPrice}/${model.outputPrice}
                     </div>
                   </button>
@@ -200,16 +201,16 @@ export default function LLMTesterForm() {
 
       {/* Provider Info Section */}
       {currentModel && (
-        <div className="space-y-2">
-          <label className="block text-sm font-semibold text-gray-700">Model Details</label>
-          <div className="px-4 py-2 border border-gray-300 rounded-lg bg-gray-50 space-y-2">
+        <div className={styles.container.sectionBase}>
+          <label className={styles.label.base}>Model Details</label>
+          <div className={styles.container.infoCard}>
             <div>
               <div className="text-sm font-medium text-gray-900">{currentModel.name}</div>
               {currentModel.description && (
                 <div className="text-xs text-gray-600 mt-1">{currentModel.description}</div>
               )}
             </div>
-            <div className="text-xs text-gray-500 pt-2 border-t border-gray-200">
+            <div className={`${styles.text.mutedSmall} pt-2 border-t border-gray-200`}>
               Pricing: ${currentModel.inputPrice} (input) / ${currentModel.outputPrice} (output) per token
             </div>
           </div>
@@ -217,8 +218,8 @@ export default function LLMTesterForm() {
       )}
 
       {/* System Prompt Section */}
-      <div className="space-y-2">
-        <label htmlFor="system-prompt" className="block text-sm font-semibold text-gray-700">
+      <div className={styles.container.sectionBase}>
+        <label htmlFor="system-prompt" className={styles.label.base}>
           System Prompt
         </label>
         <textarea
@@ -226,13 +227,13 @@ export default function LLMTesterForm() {
           value={systemPrompt}
           onChange={(e) => setSystemPrompt(e.target.value)}
           placeholder="Define the behavior and context for the AI..."
-          className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 min-h-24 font-mono text-sm"
+          className={`${styles.input.base} min-h-24 font-mono text-sm`}
         />
       </div>
 
       {/* Input Prompt Section */}
-      <div className="space-y-2">
-        <label htmlFor="input-prompt" className="block text-sm font-semibold text-gray-700">
+      <div className={styles.container.sectionBase}>
+        <label htmlFor="input-prompt" className={styles.label.base}>
           Input Prompt
         </label>
         <textarea
@@ -240,21 +241,21 @@ export default function LLMTesterForm() {
           value={inputPrompt}
           onChange={(e) => setInputPrompt(e.target.value)}
           placeholder="Enter your question or request..."
-          className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 min-h-24 font-mono text-sm"
+          className={`${styles.input.base} min-h-24 font-mono text-sm`}
         />
       </div>
 
       {/* Conversation History Section */}
-      <div className="space-y-3">
-        <label className="block text-sm font-semibold text-gray-700">Conversation History</label>
+      <div className={styles.container.section}>
+        <label className={styles.label.base}>Conversation History</label>
 
-        <div className="space-y-3">
+        <div className={styles.container.section}>
           {messages.length === 0 ? (
-            <p className="text-gray-500 text-sm italic">No messages added yet</p>
+            <p className={styles.text.italic}>No messages added yet</p>
           ) : (
             messages.map((message) => (
-              <div key={message.id} className="p-4 border border-gray-200 rounded-lg space-y-3">
-                <div className="flex items-end gap-2">
+              <div key={message.id} className={styles.container.messageCard}>
+                <div className={styles.layout.flexGap}>
                   <select
                     value={message.role}
                     onChange={(e) =>
@@ -262,7 +263,7 @@ export default function LLMTesterForm() {
                         role: e.target.value as 'system' | 'assistant' | 'user',
                       })
                     }
-                    className="px-3 py-1 border border-gray-300 rounded text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    className={styles.input.sm}
                   >
                     <option value="user">User</option>
                     <option value="assistant">Assistant</option>
@@ -271,7 +272,7 @@ export default function LLMTesterForm() {
                   <button
                     type="button"
                     onClick={() => deleteMessage(message.id)}
-                    className="p-1 text-red-600 hover:bg-red-50 rounded transition-colors"
+                    className={styles.button.tertiary}
                   >
                     <Trash2 size={18} />
                   </button>
@@ -279,25 +280,25 @@ export default function LLMTesterForm() {
 
                 {message.role === 'assistant' && (
                   <div>
-                    <label className="block text-xs font-semibold text-gray-600 mb-1">
+                    <label className={styles.label.smallMuted}>
                       Reasoning (optional)
                     </label>
                     <textarea
                       value={message.reasoning || ''}
                       onChange={(e) => updateMessage(message.id, { reasoning: e.target.value })}
                       placeholder="Internal reasoning (optional)..."
-                      className="w-full px-3 py-2 border border-gray-300 rounded text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 font-mono min-h-16"
+                      className={`${styles.input.textarea} min-h-16`}
                     />
                   </div>
                 )}
 
                 <div>
-                  <label className="block text-xs font-semibold text-gray-600 mb-1">Text</label>
+                  <label className={styles.label.smallMuted}>Text</label>
                   <textarea
                     value={message.text}
                     onChange={(e) => updateMessage(message.id, { text: e.target.value })}
                     placeholder="Message content..."
-                    className="w-full px-3 py-2 border border-gray-300 rounded text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 font-mono min-h-20"
+                    className={`${styles.input.textarea} min-h-20`}
                   />
                 </div>
               </div>
@@ -305,11 +306,11 @@ export default function LLMTesterForm() {
           )}
         </div>
 
-        <div className="flex justify-end">
+        <div className={styles.layout.flexEnd}>
           <button
             type="button"
             onClick={addMessage}
-            className="flex items-center gap-2 px-3 py-1 text-sm bg-blue-600 text-white rounded hover:bg-blue-700 transition-colors"
+            className={styles.button.primarySmall}
           >
             <Plus size={16} />
             Add Message
@@ -319,8 +320,8 @@ export default function LLMTesterForm() {
 
       {/* Parameters Section */}
       <div className="space-y-4">
-        <h3 className="text-sm font-semibold text-gray-700">Model Parameters</h3>
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+        <h3 className={styles.label.base}>Model Parameters</h3>
+        <div className={styles.layout.parameterGrid}>
           {[
             { key: 'maxOutputTokens', label: 'Max Output Tokens', step: 1 },
             { key: 'temperature', label: 'Temperature', step: 0.01, min: 0, max: 2 },
@@ -334,29 +335,21 @@ export default function LLMTesterForm() {
 
             return (
               <div key={param.key} className="space-y-2">
-                <label className="block text-xs font-semibold text-gray-700">
+                <label className={styles.label.small}>
                   {param.label}
                 </label>
                 <div className="flex gap-2">
                   <button
                     type="button"
                     onClick={() => handleParameterChange(paramKey, 'default')}
-                    className={`px-3 py-2 rounded text-sm font-medium transition-colors ${
-                      paramValue.type === 'default'
-                        ? 'bg-blue-600 text-white'
-                        : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
-                    }`}
+                    className={`${paramValue.type === 'default' ? styles.button.secondary : styles.button.secondaryInactive}`}
                   >
                     Default
                   </button>
                   <button
                     type="button"
                     onClick={() => handleParameterChange(paramKey, 'custom')}
-                    className={`px-3 py-2 rounded text-sm font-medium transition-colors ${
-                      paramValue.type === 'custom'
-                        ? 'bg-blue-600 text-white'
-                        : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
-                    }`}
+                    className={`${paramValue.type === 'custom' ? styles.button.secondary : styles.button.secondaryInactive}`}
                   >
                     Custom
                   </button>
@@ -376,7 +369,7 @@ export default function LLMTesterForm() {
                       )
                     }
                     placeholder="Enter value..."
-                    className="w-full px-3 py-2 border border-gray-300 rounded text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    className={styles.input.sm}
                   />
                 )}
               </div>
@@ -388,7 +381,7 @@ export default function LLMTesterForm() {
       {/* Submit Button */}
       <button
         type="submit"
-        className="w-full py-3 bg-blue-600 text-white font-semibold rounded-lg hover:bg-blue-700 transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
+        className={`${styles.button.primary} w-full py-3 font-semibold`}
       >
         Send Request
       </button>

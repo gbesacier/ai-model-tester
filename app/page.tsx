@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { signIn } from "next-auth/react";
+import { styles } from "@/components/styles";
 
 export default function Home() {
   const [email, setEmail] = useState("");
@@ -33,13 +34,13 @@ export default function Home() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-zinc-100 py-12 px-4">
-      <div className="max-w-md w-full bg-white p-8 rounded-xl shadow">
-        <h1 className="text-2xl font-semibold mb-6">Sign in</h1>
-        {error && <p className="text-sm text-red-600 mb-4">{error}</p>}
-        <form onSubmit={handleSubmit} className="space-y-4">
+    <div className={styles.container.authPage}>
+      <div className={styles.container.authCard}>
+        <h1 className={styles.text.authHeading}>Sign in</h1>
+        {error && <p className={styles.text.authError}>{error}</p>}
+        <form onSubmit={handleSubmit} className={styles.layout.authForm}>
           <label className="block">
-            <span className="text-sm font-medium">Email</span>
+            <span className={styles.label.base}>Email</span>
             <input
               name="email"
               value={email}
@@ -47,12 +48,12 @@ export default function Home() {
               type="email"
               autoComplete="email"
               required
-              className="mt-1 block w-full rounded border px-3 py-2"
+              className={styles.input.auth}
             />
           </label>
 
           <label className="block">
-            <span className="text-sm font-medium">Password</span>
+            <span className={styles.label.base}>Password</span>
             <input
               name="password"
               value={password}
@@ -60,14 +61,14 @@ export default function Home() {
               type="password"
               autoComplete="current-password"
               required
-              className="mt-1 block w-full rounded border px-3 py-2"
+              className={styles.input.auth}
             />
           </label>
 
           <button
             type="submit"
             disabled={loading}
-            className="w-full rounded bg-indigo-600 text-white py-2 font-semibold hover:bg-indigo-700 disabled:bg-indigo-300"
+            className={styles.button.auth}
           >
             {loading ? "Signing in..." : "Sign in"}
           </button>
