@@ -41,6 +41,7 @@ async function populateModelsFromAPI(): Promise<void> {
         description?: string; 
         type?: string;
         created?: number;
+        released?: number;
         context_window?: number;
         max_tokens?: number;
         tags?: string[];
@@ -54,7 +55,7 @@ async function populateModelsFromAPI(): Promise<void> {
         id: model.id,
         name: model.name,
         description: model.description,
-        created: model.created ? new Date(model.created * 1000) : undefined,
+        created: model.released ? new Date(model.released * 1000) : undefined,
         reasoning: model.tags?.includes('reasoning') || false,
       }))
     );
@@ -92,8 +93,8 @@ async function populateModelsFromAPI(): Promise<void> {
           allProviders.push({
             modelId: model.id,
             provider: endpoint.provider_name,
-            inputPrice: parseFloat(endpoint.pricing?.prompt || '0') * PRICE_FACTOR,
-            outputPrice: parseFloat(endpoint.pricing?.completion || '0') * PRICE_FACTOR,
+            inputPrice: Math.round(parseFloat(endpoint.pricing?.prompt || '0') * PRICE_FACTOR),
+            outputPrice: Math.round(parseFloat(endpoint.pricing?.completion || '0') * PRICE_FACTOR),
             contextLength: endpoint.context_length || 0,
           });
         });
