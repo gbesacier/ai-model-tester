@@ -26,6 +26,7 @@ export default function LLMTesterForm() {
   const [selectedModel, setSelectedModel] = useState<string>('');
   const [modelSearchInput, setModelSearchInput] = useState('');
   const [showModelDropdown, setShowModelDropdown] = useState(false);
+  const [modelSortBy, setModelSortBy] = useState<'name' | 'price'>('name');
 
   const [systemPrompt, setSystemPrompt] = useState('');
   const [inputPrompt, setInputPrompt] = useState('');
@@ -83,6 +84,17 @@ export default function LLMTesterForm() {
   const filteredModels = models.filter((model) =>
     model.name.toLowerCase().includes(modelSearchInput.toLowerCase())
   );
+
+  // Sort filtered models
+  const sortedModels = [...filteredModels].sort((a, b) => {
+    if (modelSortBy === 'name') {
+      return a.name.localeCompare(b.name);
+    } else {
+      const aTotal = parseFloat(a.inputPrice) + parseFloat(a.outputPrice);
+      const bTotal = parseFloat(b.inputPrice) + parseFloat(b.outputPrice);
+      return aTotal - bTotal;
+    }
+  });
 
   // Handle model selection
   const handleSelectModel = (modelId: string) => {
@@ -176,8 +188,24 @@ export default function LLMTesterForm() {
                   autoFocus
                 />
               </div>
+              <div className="flex gap-2 border-b border-gray-200 p-2">
+                <button
+                  type="button"
+                  onClick={() => setModelSortBy('name')}
+                  className={modelSortBy === 'name' ? styles.button.sort : styles.button.sortInactive}
+                >
+                  Name
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setModelSortBy('price')}
+                  className={modelSortBy === 'price' ? styles.button.sort : styles.button.sortInactive}
+                >
+                  Price (Low → High)
+                </button>
+              </div>
               <div className={styles.container.dropdownContent}>
-                {filteredModels.map((model) => (
+                {sortedModels.map((model) => (
                   <button
                     key={model.id}
                     type="button"
@@ -186,11 +214,11 @@ export default function LLMTesterForm() {
                   >
                     <div className="font-medium text-gray-900">{model.name}</div>
                     <div className={styles.text.mutedSmallMt}>
-                      {model.id} • ${model.inputPrice}/${model.outputPrice}
+                      {model.id} • ${(parseFloat(model.inputPrice) * 1000000).toFixed(2)}/${(parseFloat(model.outputPrice) * 1000000).toFixed(2)} per M tokens
                     </div>
                   </button>
                 ))}
-                {filteredModels.length === 0 && (
+                {sortedModels.length === 0 && (
                   <div className="px-4 py-3 text-gray-500 text-center">No models found</div>
                 )}
               </div>
@@ -211,7 +239,7 @@ export default function LLMTesterForm() {
               )}
             </div>
             <div className={`${styles.text.mutedSmall} pt-2 border-t border-gray-200`}>
-              Pricing: ${currentModel.inputPrice} (input) / ${currentModel.outputPrice} (output) per token
+              Pricing: ${(parseFloat(currentModel.inputPrice) * 1000000).toFixed(2)} (input) / ${(parseFloat(currentModel.outputPrice) * 1000000).toFixed(2)} (output) per million tokens
             </div>
           </div>
         </div>

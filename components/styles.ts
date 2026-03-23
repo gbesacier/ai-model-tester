@@ -24,6 +24,8 @@ export const styles = {
     primarySmall: 'flex items-center gap-2 px-3 py-1 text-sm bg-blue-600 text-white rounded hover:bg-blue-700 transition-colors',
     secondary: 'px-3 py-2 rounded text-sm font-medium transition-colors bg-blue-600 text-white hover:bg-blue-700',
     secondaryInactive: 'px-3 py-2 rounded text-sm font-medium transition-colors bg-gray-200 text-gray-700 hover:bg-gray-300',
+    sort: 'px-3 py-1 rounded text-xs font-medium transition-colors bg-blue-600 text-white',
+    sortInactive: 'px-3 py-1 rounded text-xs font-medium transition-colors bg-gray-200 text-gray-700 hover:bg-gray-300',
     tertiary: 'p-1 text-red-600 hover:bg-red-50 rounded transition-colors',
     dropdown: 'w-full px-4 py-2 text-left border border-gray-300 rounded-lg bg-white flex items-center justify-between hover:border-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500',
     auth: 'w-full rounded bg-blue-600 text-white py-2 font-semibold hover:bg-blue-700 disabled:bg-blue-300 transition-colors',
