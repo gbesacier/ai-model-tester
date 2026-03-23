@@ -276,7 +276,7 @@ export default function LLMTesterForm() {
           {showProviderDropdown && (
             <div className={styles.container.dropdown}>
               <div className={styles.container.dropdownContent}>
-                {currentModel && currentModel.providers.map((p) => (
+                {currentModel && currentModel.providers.sort((a, b) => a.inputPrice + a.outputPrice - b.inputPrice - b.outputPrice).map((p) => (
                   <button
                     key={p.provider}
                     type="button"
