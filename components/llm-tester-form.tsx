@@ -268,7 +268,7 @@ export default function LLMTesterForm() {
                   <button
                     key={p.provider}
                     type="button"
-                    onClick={() => setSelectedProvider(p.provider)}
+                    onClick={() => { setSelectedProvider(p.provider); setShowProviderDropdown(false); }}
                     className="w-full text-left px-4 py-3 hover:bg-blue-50 border-b border-gray-200 last:border-b-0 focus:outline-none focus:bg-blue-50"
                   >
                     <div className="font-medium text-gray-900">{p.provider}</div>
@@ -288,16 +288,16 @@ export default function LLMTesterForm() {
       </div>
 
       {/* Provider Info Section */}
-      {currentModel && selectedProvider && (
+      {currentModel && currentProvider && (
         <div className={styles.container.sectionBase}>
-          <label className={styles.label.base}>Model Details</label>
           <div className={styles.container.infoCard}>
             <div>
-              <div className="text-sm font-medium text-gray-900">{currentModel.name}</div>
-              <div className="text-xs text-gray-600 mt-1">Provider: {selectedProvider}</div>
+              <div className="text-sm font-medium text-gray-900">Model: <a href={`https://vercel.com/ai-gateway/models/${currentModel.name.split('/')[1]}`} target="_blank" rel="noopener noreferrer">{currentModel.name}</a> • Provider: {currentProvider.provider}</div>
               {currentModel.description && (
                 <div className="text-xs text-gray-600 mt-1">{currentModel.description}</div>
               )}
+              <div>${currentProvider.inputPrice.toFixed(4)} / ${currentProvider.outputPrice.toFixed(4)} per M tokens
+                   • Context: {(currentProvider.contextLength / 1000).toFixed(0)}K tokens</div>
             </div>
           </div>
         </div>
