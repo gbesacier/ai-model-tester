@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect, useMemo } from 'react';
-import { ChevronDown, Trash2, Plus } from 'lucide-react';
+import { ChevronDown, Trash2, Plus, ArrowDownAz, ArrowDown01 } from 'lucide-react';
 import { fetchAvailableModels, type ModelInfo } from '@/app/actions/models';
 import { styles } from '@/components/styles';
 
@@ -28,7 +28,7 @@ export default function LLMTesterForm() {
   const [modelSearchInput, setModelSearchInput] = useState('');
   const [showModelDropdown, setShowModelDropdown] = useState(false);
   const [showProviderDropdown, setShowProviderDropdown] = useState(false);
-  const [modelSortBy, setModelSortBy] = useState<'name' | 'price'>('name');
+  const [modelSortBy, setModelSortBy] = useState<'name' | 'price'>('price');
   const [minContextLength, setMinContextLength] = useState<number | null>(null);
   const [filterReasoning, setFilterReasoning] = useState(false);
 
@@ -194,18 +194,18 @@ export default function LLMTesterForm() {
                   autoFocus
                 />
                 <div>
-                  <label className={styles.label.small}>Minimum Context Length</label>
+                  <label className={styles.label.small}>Context</label>
                   <select
                     value={minContextLength ?? ''}
                     onChange={(e) => setMinContextLength(e.target.value ? parseInt(e.target.value) : null)}
                     className={styles.input.sm}
                   >
-                    <option value="">No filter</option>
-                    <option value="64000">64K tokens</option>
-                    <option value="128000">128K tokens</option>
-                    <option value="200000">200K tokens</option>
-                    <option value="400000">400K tokens</option>
-                    <option value="1000000">1M tokens</option>
+                    <option value="">No minimum</option>
+                    <option value="64000">64K+ tokens</option>
+                    <option value="128000">128K+ tokens</option>
+                    <option value="200000">200K+ tokens</option>
+                    <option value="400000">400K+ tokens</option>
+                    <option value="1000000">1M+ tokens</option>
                   </select>
                 </div>
                 <button
@@ -213,14 +213,14 @@ export default function LLMTesterForm() {
                   onClick={() => setModelSortBy('name')}
                   className={modelSortBy === 'name' ? styles.button.sort : styles.button.sortInactive}
                 >
-                  Name
+                  <ArrowDownAz /> Name
                 </button>
                 <button
                   type="button"
                   onClick={() => setModelSortBy('price')}
                   className={modelSortBy === 'price' ? styles.button.sort : styles.button.sortInactive}
                 >
-                  Price
+                  <ArrowDown01 /> Price
                 </button>
                 <button
                   type="button"
