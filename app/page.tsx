@@ -41,9 +41,11 @@ export default function Home() {
           <label className="block">
             <span className="text-sm font-medium">Email</span>
             <input
+              name="email"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               type="email"
+              autoComplete="email"
               required
               className="mt-1 block w-full rounded border px-3 py-2"
             />
@@ -52,9 +54,11 @@ export default function Home() {
           <label className="block">
             <span className="text-sm font-medium">Password</span>
             <input
+              name="password"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               type="password"
+              autoComplete="current-password"
               required
               className="mt-1 block w-full rounded border px-3 py-2"
             />
