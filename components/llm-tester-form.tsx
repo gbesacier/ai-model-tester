@@ -287,7 +287,6 @@ export default function LLMTesterForm() {
                     <div className={styles.text.mutedSmallMt}>
                        ${p.inputPrice.toFixed(4)} / ${p.outputPrice.toFixed(4)} per M tokens
                        • Context: {(p.contextLength / 1000).toFixed(0)}K tokens
-                       • {currentModel.reasoning ? 'Reasoning' : 'Not Reasoning'}
                     </div>
                   </button>
                 ))}
