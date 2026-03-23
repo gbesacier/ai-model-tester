@@ -30,6 +30,7 @@ export default function LLMTesterForm() {
   const [showProviderDropdown, setShowProviderDropdown] = useState(false);
   const [modelSortBy, setModelSortBy] = useState<'name' | 'price'>('name');
   const [minContextLength, setMinContextLength] = useState<number | null>(null);
+  const [filterReasoning, setFilterReasoning] = useState(false);
 
   const [systemPrompt, setSystemPrompt] = useState('');
   const [inputPrompt, setInputPrompt] = useState('');
@@ -75,7 +76,8 @@ export default function LLMTesterForm() {
   const filteredModels = models.filter((model) => {
     const matchesSearch = model.name.toLowerCase().includes(modelSearchInput.toLowerCase());
     const matchesContext = minContextLength ? Math.max(...model.providers.map((p) => p.contextLength)) >= minContextLength : true;
-    return matchesSearch && matchesContext;
+    const matchesReasoning = !filterReasoning || model.reasoning;
+    return matchesSearch && matchesContext && matchesReasoning;
   });
 
   // Sort filtered models
@@ -178,7 +180,15 @@ export default function LLMTesterForm() {
 
           {showModelDropdown && (
             <div className={styles.container.dropdown}>
-              <div className="space-y-2 p-2 border-b border-gray-200">
+              <div className="flex gap-2 border-b border-gray-200 p-2">
+                <input
+                  type="text"
+                  placeholder="Search models..."
+                  value={modelSearchInput}
+                  onChange={(e) => setModelSearchInput(e.target.value)}
+                  className={styles.input.search}
+                  autoFocus
+                />
                 <div>
                   <label className={styles.label.small}>Minimum Context Length</label>
                   <select
@@ -194,16 +204,6 @@ export default function LLMTesterForm() {
                     <option value="1000000">1M tokens</option>
                   </select>
                 </div>
-                <input
-                  type="text"
-                  placeholder="Search models..."
-                  value={modelSearchInput}
-                  onChange={(e) => setModelSearchInput(e.target.value)}
-                  className={styles.input.search}
-                  autoFocus
-                />
-              </div>
-              <div className="flex gap-2 border-b border-gray-200 p-2">
                 <button
                   type="button"
                   onClick={() => setModelSortBy('name')}
@@ -217,6 +217,13 @@ export default function LLMTesterForm() {
                   className={modelSortBy === 'price' ? styles.button.sort : styles.button.sortInactive}
                 >
                   Price
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setFilterReasoning(!filterReasoning)}
+                  className={filterReasoning ? styles.button.sort : styles.button.sortInactive}
+                >
+                  Reasoning
                 </button>
               </div>
               <div className={styles.container.dropdownContent}>
