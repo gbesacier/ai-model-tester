@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { ChevronDown, Trash2, Plus } from 'lucide-react';
 import { fetchAvailableModels, type ModelInfo } from '@/app/actions/models';
 import { styles } from '@/components/styles';
@@ -73,23 +73,29 @@ export default function LLMTesterForm() {
   const currentProvider = currentModel?.providers.find((p) => p.provider === selectedProvider);
 
   // Filter all model-provider combinations based on search and context length
-  const filteredModels = models.filter((model) => {
-    const matchesSearch = model.name.toLowerCase().includes(modelSearchInput.toLowerCase());
-    const matchesContext = minContextLength ? Math.max(...model.providers.map((p) => p.contextLength)) >= minContextLength : true;
-    const matchesReasoning = !filterReasoning || model.reasoning;
-    return matchesSearch && matchesContext && matchesReasoning;
-  });
+  const filteredModels = useMemo(() => {
+    return models.filter((model) => {
+      const matchesSearch = model.name.toLowerCase().includes(modelSearchInput.toLowerCase());
+      const matchesContext = minContextLength ? Math.max(...model.providers.map((p) => p.contextLength)) >= minContextLength : true;
+      const matchesReasoning = !filterReasoning || model.reasoning;
+      return matchesSearch && matchesContext && matchesReasoning;
+    });
+  }, [models, modelSearchInput, minContextLength, filterReasoning]);
 
   // Sort filtered models
-  const sortedModels = [...filteredModels].sort((a, b) => {
-    if (modelSortBy === 'name') {
-      return a.name.localeCompare(b.name);
-    } else {
-      const aTotal = Math.min(...a.providers.map((p) => p.inputPrice + p.outputPrice));
-      const bTotal = Math.min(...b.providers.map((p) => p.inputPrice + p.outputPrice));
-      return aTotal - bTotal;
-    }
-  });
+  const sortedModels = useMemo(() => {
+    return [...filteredModels].sort((a, b) => {
+      if (modelSortBy === 'name') {
+        return a.name.localeCompare(b.name);
+      } else if (modelSortBy === 'price') {
+        const aTotal = Math.min(...a.providers.map((p) => p.inputPrice + p.outputPrice));
+        const bTotal = Math.min(...b.providers.map((p) => p.inputPrice + p.outputPrice));
+        return aTotal - bTotal;
+      } else {
+        throw new Error('Invalid sort option');
+      }
+    })
+  }, [filteredModels, modelSortBy]);
 
   // Handle model selection
   const handleSelectModel = (modelId: string) => {
