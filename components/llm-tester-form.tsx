@@ -27,6 +27,7 @@ export default function LLMTesterForm() {
   const [modelSearchInput, setModelSearchInput] = useState('');
   const [showModelDropdown, setShowModelDropdown] = useState(false);
   const [modelSortBy, setModelSortBy] = useState<'name' | 'price'>('name');
+  const [minContextLength, setMinContextLength] = useState<number | null>(null);
 
   const [systemPrompt, setSystemPrompt] = useState('');
   const [inputPrompt, setInputPrompt] = useState('');
@@ -80,10 +81,12 @@ export default function LLMTesterForm() {
     });
   };
 
-  // Filter models based on search
-  const filteredModels = models.filter((model) =>
-    model.name.toLowerCase().includes(modelSearchInput.toLowerCase())
-  );
+  // Filter models based on search and context length
+  const filteredModels = models.filter((model) => {
+    const matchesSearch = model.name.toLowerCase().includes(modelSearchInput.toLowerCase());
+    const matchesContext = minContextLength ? (model.contextLength || 0) >= minContextLength : true;
+    return matchesSearch && matchesContext;
+  });
 
   // Sort filtered models
   const sortedModels = [...filteredModels].sort((a, b) => {
@@ -178,7 +181,22 @@ export default function LLMTesterForm() {
 
           {showModelDropdown && (
             <div className={styles.container.dropdown}>
-              <div className="p-2 border-b border-gray-200">
+              <div className="space-y-2 p-2 border-b border-gray-200">
+                <div>
+                  <label className={styles.label.small}>Minimum Context Length</label>
+                  <select
+                    value={minContextLength ?? ''}
+                    onChange={(e) => setMinContextLength(e.target.value ? parseInt(e.target.value) : null)}
+                    className={styles.input.sm}
+                  >
+                    <option value="">No filter</option>
+                    <option value="64000">64K tokens</option>
+                    <option value="128000">128K tokens</option>
+                    <option value="200000">200K tokens</option>
+                    <option value="400000">400K tokens</option>
+                    <option value="1000000">1M tokens</option>
+                  </select>
+                </div>
                 <input
                   type="text"
                   placeholder="Search models..."
@@ -201,7 +219,7 @@ export default function LLMTesterForm() {
                   onClick={() => setModelSortBy('price')}
                   className={modelSortBy === 'price' ? styles.button.sort : styles.button.sortInactive}
                 >
-                  Price (Low → High)
+                  Price
                 </button>
               </div>
               <div className={styles.container.dropdownContent}>
@@ -214,7 +232,13 @@ export default function LLMTesterForm() {
                   >
                     <div className="font-medium text-gray-900">{model.name}</div>
                     <div className={styles.text.mutedSmallMt}>
-                      {model.id} • ${(parseFloat(model.inputPrice) * 1000000).toFixed(2)}/${(parseFloat(model.outputPrice) * 1000000).toFixed(2)} per M tokens
+                      {model.id} • ${(parseFloat(model.inputPrice) * 1000000).toFixed(2)} / ${(parseFloat(model.outputPrice) * 1000000).toFixed(2)} per M tokens
+                      {model.contextLength && (
+                        <>
+                           • 
+                          Context: {(model.contextLength / 1000).toFixed(0)}K tokens
+                        </>
+                      )}
                     </div>
                   </button>
                 ))}
@@ -306,7 +330,7 @@ export default function LLMTesterForm() {
                   </button>
                 </div>
 
-                {message.role === 'assistant' && (
+                {message.role === 'assistant' && currentModel?.reasoning && (
                   <div>
                     <label className={styles.label.smallMuted}>
                       Reasoning (optional)

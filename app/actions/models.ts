@@ -10,6 +10,9 @@ export interface ModelInfo {
   description?: string | null;
   inputPrice: string;
   outputPrice: string;
+  contextLength?: number;
+  reasoning?: boolean;
+  more: any;
 }
 
 export async function fetchAvailableModels(): Promise<ModelInfo[]> {
@@ -31,6 +34,7 @@ export async function fetchAvailableModels(): Promise<ModelInfo[]> {
         description: model.description,
         inputPrice: model.pricing?.input || '0',
         outputPrice: model.pricing?.output || '0',
+        more: model,
       }));
 
     return languageModels;
