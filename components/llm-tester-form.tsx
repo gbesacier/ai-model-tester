@@ -23,9 +23,11 @@ export default function LLMTesterForm() {
   const [error, setError] = useState<string | null>(null);
 
   // Form state
-  const [selectedModel, setSelectedModel] = useState<string>('');
+  const [selectedModelId, setSelectedModelId] = useState<string>('');
+  const [selectedProvider, setSelectedProvider] = useState<string>('');
   const [modelSearchInput, setModelSearchInput] = useState('');
   const [showModelDropdown, setShowModelDropdown] = useState(false);
+  const [showProviderDropdown, setShowProviderDropdown] = useState(false);
   const [modelSortBy, setModelSortBy] = useState<'name' | 'price'>('name');
   const [minContextLength, setMinContextLength] = useState<number | null>(null);
 
@@ -49,7 +51,6 @@ export default function LLMTesterForm() {
     frequencyPenalty: { type: 'default' },
   });
 
-  // Fetch models from Server Action
   useEffect(() => {
     const loadModels = async () => {
       try {
@@ -67,24 +68,13 @@ export default function LLMTesterForm() {
     loadModels();
   }, []);
 
-  // Get selected model object
-  const currentModel = models.find((m) => m.id === selectedModel);
+  const currentModel = models.find((m) => m.id === selectedModelId);
+  const currentProvider = currentModel?.providers.find((p) => p.provider === selectedProvider);
 
-  // Find cheapest model (since each model only has one provider)
-  const getCheapestModel = () => {
-    if (models.length === 0) return null;
-    return models.reduce((cheapest, current) => {
-      const currentTotal = parseFloat(current.inputPrice) + parseFloat(current.outputPrice);
-      const cheapestTotal =
-        parseFloat(cheapest.inputPrice) + parseFloat(cheapest.outputPrice);
-      return currentTotal < cheapestTotal ? current : cheapest;
-    });
-  };
-
-  // Filter models based on search and context length
+  // Filter all model-provider combinations based on search and context length
   const filteredModels = models.filter((model) => {
     const matchesSearch = model.name.toLowerCase().includes(modelSearchInput.toLowerCase());
-    const matchesContext = minContextLength ? (model.contextLength || 0) >= minContextLength : true;
+    const matchesContext = minContextLength ? Math.max(...model.providers.map((p) => p.contextLength)) >= minContextLength : true;
     return matchesSearch && matchesContext;
   });
 
@@ -93,17 +83,23 @@ export default function LLMTesterForm() {
     if (modelSortBy === 'name') {
       return a.name.localeCompare(b.name);
     } else {
-      const aTotal = parseFloat(a.inputPrice) + parseFloat(a.outputPrice);
-      const bTotal = parseFloat(b.inputPrice) + parseFloat(b.outputPrice);
+      const aTotal = Math.min(...a.providers.map((p) => p.inputPrice + p.outputPrice));
+      const bTotal = Math.min(...b.providers.map((p) => p.inputPrice + p.outputPrice));
       return aTotal - bTotal;
     }
   });
 
   // Handle model selection
   const handleSelectModel = (modelId: string) => {
-    setSelectedModel(modelId);
+    setSelectedModelId(modelId);
     setModelSearchInput('');
     setShowModelDropdown(false);
+    const m = models.find((m) => m.id === selectedModelId)
+    if(m?.providers.length === 1) {
+      setSelectedProvider(m?.providers[0].provider);
+    }else{
+      setSelectedProvider('');
+    }
   };
 
   // Message management
@@ -142,7 +138,8 @@ export default function LLMTesterForm() {
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     console.log({
-      model: selectedModel,
+      modelId: selectedModelId,
+      provider: selectedProvider,
       systemPrompt,
       inputPrompt,
       messages,
@@ -172,7 +169,7 @@ export default function LLMTesterForm() {
             onClick={() => setShowModelDropdown(!showModelDropdown)}
             className={styles.button.dropdown}
           >
-            <span>{selectedModel || 'Select a model...'}</span>
+            <span>{selectedModelId || 'Select a model...'}</span>
             <ChevronDown
               size={18}
               className={`transition-transform ${showModelDropdown ? 'rotate-180' : ''}`}
@@ -232,13 +229,10 @@ export default function LLMTesterForm() {
                   >
                     <div className="font-medium text-gray-900">{model.name}</div>
                     <div className={styles.text.mutedSmallMt}>
-                      {model.id} • ${(parseFloat(model.inputPrice) * 1000000).toFixed(2)} / ${(parseFloat(model.outputPrice) * 1000000).toFixed(2)} per M tokens
-                      {model.contextLength && (
-                        <>
-                           • 
-                          Context: {(model.contextLength / 1000).toFixed(0)}K tokens
-                        </>
-                      )}
+                      {model.id}
+                       • ${model.providers.length > 0 ? (Math.min(...model.providers.map((p) => p.inputPrice))).toFixed(4) : 'N/A'}
+                       / ${model.providers.length > 0 ? (Math.min(...model.providers.map((p) => p.outputPrice))).toFixed(4) : 'N/A'} per M tokens
+                       • Context: {model.providers.length > 0 ? (Math.max(...model.providers.map((p) => p.contextLength)) / 1000).toFixed(0) : 'N/A'}K tokens
                     </div>
                   </button>
                 ))}
@@ -251,19 +245,59 @@ export default function LLMTesterForm() {
         </div>
       </div>
 
+      {/* Provider Selection Section */}
+      <div className={styles.container.sectionBase}>
+        <label className={styles.label.base}>Provider</label>
+        <div className="relative">
+          <button
+            type="button"
+            onClick={() => setShowProviderDropdown(!showProviderDropdown)}
+            className={styles.button.dropdown}
+          >
+            <span>{selectedProvider || 'Select a provider...'}</span>
+            <ChevronDown
+              size={18}
+              className={`transition-transform ${showModelDropdown ? 'rotate-180' : ''}`}
+            />
+          </button>
+
+          {showProviderDropdown && (
+            <div className={styles.container.dropdown}>
+              <div className={styles.container.dropdownContent}>
+                {currentModel && currentModel.providers.map((p) => (
+                  <button
+                    key={p.provider}
+                    type="button"
+                    onClick={() => setSelectedProvider(p.provider)}
+                    className="w-full text-left px-4 py-3 hover:bg-blue-50 border-b border-gray-200 last:border-b-0 focus:outline-none focus:bg-blue-50"
+                  >
+                    <div className="font-medium text-gray-900">{p.provider}</div>
+                    <div className={styles.text.mutedSmallMt}>
+                       ${p.inputPrice.toFixed(4)} / ${p.outputPrice.toFixed(4)} per M tokens
+                       • Context: {(p.contextLength / 1000).toFixed(0)}K tokens
+                    </div>
+                  </button>
+                ))}
+                {!currentModel || currentModel.providers.length === 0 && (
+                  <div className="px-4 py-3 text-gray-500 text-center">No providers found</div>
+                )}
+              </div>
+            </div>
+          )}
+        </div>
+      </div>
+
       {/* Provider Info Section */}
-      {currentModel && (
+      {currentModel && selectedProvider && (
         <div className={styles.container.sectionBase}>
           <label className={styles.label.base}>Model Details</label>
           <div className={styles.container.infoCard}>
             <div>
               <div className="text-sm font-medium text-gray-900">{currentModel.name}</div>
+              <div className="text-xs text-gray-600 mt-1">Provider: {selectedProvider}</div>
               {currentModel.description && (
                 <div className="text-xs text-gray-600 mt-1">{currentModel.description}</div>
               )}
-            </div>
-            <div className={`${styles.text.mutedSmall} pt-2 border-t border-gray-200`}>
-              Pricing: ${(parseFloat(currentModel.inputPrice) * 1000000).toFixed(2)} (input) / ${(parseFloat(currentModel.outputPrice) * 1000000).toFixed(2)} (output) per million tokens
             </div>
           </div>
         </div>
