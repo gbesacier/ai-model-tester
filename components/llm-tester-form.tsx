@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useMemo } from 'react';
 import { Listbox, ListboxButton, ListboxOptions, ListboxOption } from '@headlessui/react';
-import { ChevronDown, Trash2, Plus, ArrowDownAz, ArrowDown01 } from 'lucide-react';
+import { ChevronDown, Trash2, Plus, ArrowDownAz, ArrowDown01, Calendar } from 'lucide-react';
 import { fetchAvailableModels, type ModelInfo } from '@/app/actions/models';
 import { styles } from '@/components/styles';
 
@@ -22,7 +22,7 @@ export default function LLMTesterForm() {
   const [selectedModelId, setSelectedModelId] = useState<string>('');
   const [selectedProvider, setSelectedProvider] = useState<string>('');
   const [modelSearchInput, setModelSearchInput] = useState('');
-  const [modelSortBy, setModelSortBy] = useState<'name' | 'price'>('price');
+  const [modelSortBy, setModelSortBy] = useState<'name' | 'price' | 'created'>('price');
   const [minContextLength, setMinContextLength] = useState<number | null>(null);
   const [filterReasoning, setFilterReasoning] = useState(false);
 
@@ -74,6 +74,10 @@ export default function LLMTesterForm() {
         const aTotal = Math.min(...a.providers.map((p) => p.inputPrice + p.outputPrice));
         const bTotal = Math.min(...b.providers.map((p) => p.inputPrice + p.outputPrice));
         return aTotal - bTotal;
+      } else if (modelSortBy === 'created') {
+        const aDate = a.created ? new Date(a.created).getTime() : 0;
+        const bDate = b.created ? new Date(b.created).getTime() : 0;
+        return bDate - aDate; // descending order
       } else {
         throw new Error('Invalid sort option');
       }
@@ -202,6 +206,13 @@ export default function LLMTesterForm() {
                 </button>
                 <button
                   type="button"
+                  onClick={() => setModelSortBy('created')}
+                  className={modelSortBy === 'created' ? styles.button.filter : styles.button.filterInactive}
+                >
+                  <Calendar /> Created
+                </button>
+                <button
+                  type="button"
                   onClick={() => setFilterReasoning(!filterReasoning)}
                   className={filterReasoning ? styles.button.filter : styles.button.filterInactive}
                 >
@@ -216,6 +227,7 @@ export default function LLMTesterForm() {
                      • ${model.providers.length > 0 ? (Math.min(...model.providers.map((p) => p.inputPrice))).toFixed(4) : 'N/A'}{' '}
                      / ${model.providers.length > 0 ? (Math.min(...model.providers.map((p) => p.outputPrice))).toFixed(4) : 'N/A'} per M tokens
                      • Context: {model.providers.length > 0 ? (Math.max(...model.providers.map((p) => p.contextLength)) / 1000).toFixed(0) : 'N/A'}K tokens
+                     • Created: {model.created ? new Date(model.created).toLocaleDateString() : 'N/A'}
                      • {model.reasoning ? 'Reasoning' : 'Not Reasoning'}
                   </div>
                 </ListboxOption>
@@ -267,7 +279,8 @@ export default function LLMTesterForm() {
                 <div className="text-xs text-gray-600 mt-1">{currentModel.description}</div>
               )}
               <div>${currentProvider.inputPrice.toFixed(4)} / ${currentProvider.outputPrice.toFixed(4)} per M tokens
-                   • Context: {(currentProvider.contextLength / 1000).toFixed(0)}K tokens</div>
+                   • Context: {(currentProvider.contextLength / 1000).toFixed(0)}K tokens
+                   • Created: {currentModel.created ? new Date(currentModel.created).toLocaleDateString() : 'N/A'}</div>
             </div>
           </div>
         </div>
