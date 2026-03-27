@@ -73,6 +73,14 @@ export default function LLMTesterForm() {
       } else if (modelSortBy === 'price') {
         const aTotal = Math.min(...a.providers.map((p) => p.inputPrice + p.outputPrice));
         const bTotal = Math.min(...b.providers.map((p) => p.inputPrice + p.outputPrice));
+        
+        // Treat prices of 0 as missing, push to bottom
+        const aHasPrice = aTotal > 0;
+        const bHasPrice = bTotal > 0;
+        
+        if (aHasPrice && !bHasPrice) return -1;
+        if (!aHasPrice && bHasPrice) return 1;
+        
         return aTotal - bTotal;
       } else if (modelSortBy === 'created') {
         const aDate = a.created ? new Date(a.created).getTime() : 0;
