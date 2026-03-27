@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect, useMemo } from 'react';
+import { Listbox, ListboxButton, ListboxOptions, ListboxOption } from '@headlessui/react';
 import { ChevronDown, Trash2, Plus, ArrowDownAz, ArrowDown01 } from 'lucide-react';
 import { fetchAvailableModels, type ModelInfo } from '@/app/actions/models';
 import { styles } from '@/components/styles';
@@ -26,8 +27,6 @@ export default function LLMTesterForm() {
   const [selectedModelId, setSelectedModelId] = useState<string>('');
   const [selectedProvider, setSelectedProvider] = useState<string>('');
   const [modelSearchInput, setModelSearchInput] = useState('');
-  const [showModelDropdown, setShowModelDropdown] = useState(false);
-  const [showProviderDropdown, setShowProviderDropdown] = useState(false);
   const [modelSortBy, setModelSortBy] = useState<'name' | 'price'>('price');
   const [minContextLength, setMinContextLength] = useState<number | null>(null);
   const [filterReasoning, setFilterReasoning] = useState(false);
@@ -95,19 +94,6 @@ export default function LLMTesterForm() {
     });
   }, [sortedModels, modelSearchInput, minContextLength, filterReasoning]);
 
-  // Handle model selection
-  const handleSelectModel = (modelId: string) => {
-    setSelectedModelId(modelId);
-    setModelSearchInput('');
-    setShowModelDropdown(false);
-    const m = models.find((m) => m.id === modelId)
-    if(m?.providers.length === 1) {
-      setSelectedProvider(m?.providers[0].provider);
-    }else{
-      setSelectedProvider('');
-    }
-  };
-
   // Message management
   const addMessage = () => {
     const newMessage: Message = {
@@ -169,22 +155,23 @@ export default function LLMTesterForm() {
       {/* Model Selection Section */}
       <div className={styles.container.sectionBase}>
         <label className={styles.label.base}>AI Model</label>
-        <div className="relative">
-          <button
-            type="button"
-            onClick={() => setShowModelDropdown(!showModelDropdown)}
-            className={styles.button.dropdown}
-          >
-            <span>{selectedModelId || 'Select a model...'}</span>
-            <ChevronDown
-              size={18}
-              className={`transition-transform ${showModelDropdown ? 'rotate-180' : ''}`}
-            />
-          </button>
-
-          {showModelDropdown && (
-            <div className={styles.container.dropdown}>
-              <div className="flex gap-2 border-b border-gray-200 p-2">
+        <Listbox value={selectedModelId} onChange={(modelId) => {
+          setSelectedModelId(modelId);
+          setModelSearchInput('');
+          const m = models.find((m) => m.id === modelId);
+          if (m?.providers.length === 1) {
+            setSelectedProvider(m?.providers[0].provider);
+          } else {
+            setSelectedProvider('');
+          }
+        }}>
+          <div className="relative">
+            <ListboxButton className={styles.button.dropdown}>
+              <span>{selectedModelId || 'Select a model...'}</span>
+              <ChevronDown size={18} className="ml-auto" />
+            </ListboxButton>
+            <ListboxOptions className={styles.container.dropdown}>
+              <div className="flex gap-2 border-b border-gray-200 p-2 sticky top-0 bg-white z-10">
                 <input
                   type="text"
                   placeholder="Search models..."
@@ -230,73 +217,53 @@ export default function LLMTesterForm() {
                   Reasoning
                 </button>
               </div>
-              <div className={styles.container.dropdownContent}>
-                {filteredModels.map((model) => (
-                  <button
-                    key={model.id}
-                    type="button"
-                    onClick={() => handleSelectModel(model.id)}
-                    className="w-full text-left px-4 py-3 hover:bg-blue-50 border-b border-gray-200 last:border-b-0 focus:outline-none focus:bg-blue-50"
-                  >
-                    <div className="font-medium text-gray-900">{model.name}</div>
-                    <div className={styles.text.mutedSmallMt}>
-                      {model.id}
-                       • ${model.providers.length > 0 ? (Math.min(...model.providers.map((p) => p.inputPrice))).toFixed(4) : 'N/A'}{' '}
-                       / ${model.providers.length > 0 ? (Math.min(...model.providers.map((p) => p.outputPrice))).toFixed(4) : 'N/A'} per M tokens
-                       • Context: {model.providers.length > 0 ? (Math.max(...model.providers.map((p) => p.contextLength)) / 1000).toFixed(0) : 'N/A'}K tokens
-                       • {model.reasoning ? 'Reasoning' : 'Not Reasoning'}
-                    </div>
-                  </button>
-                ))}
-                {filteredModels.length === 0 && (
-                  <div className="px-4 py-3 text-gray-500 text-center">No models found</div>
-                )}
-              </div>
-            </div>
-          )}
-        </div>
+              {filteredModels.map((model) => (
+                <ListboxOption key={model.id} value={model.id} className="w-full text-left px-4 py-3 hover:bg-blue-50 border-b border-gray-200 last:border-b-0 cursor-pointer data-selected:bg-blue-100">
+                  <div className="font-medium text-gray-900">{model.name}</div>
+                  <div className={styles.text.mutedSmallMt}>
+                    {model.id}
+                     • ${model.providers.length > 0 ? (Math.min(...model.providers.map((p) => p.inputPrice))).toFixed(4) : 'N/A'}{' '}
+                     / ${model.providers.length > 0 ? (Math.min(...model.providers.map((p) => p.outputPrice))).toFixed(4) : 'N/A'} per M tokens
+                     • Context: {model.providers.length > 0 ? (Math.max(...model.providers.map((p) => p.contextLength)) / 1000).toFixed(0) : 'N/A'}K tokens
+                     • {model.reasoning ? 'Reasoning' : 'Not Reasoning'}
+                  </div>
+                </ListboxOption>
+              ))}
+              {filteredModels.length === 0 && (
+                <div className="px-4 py-3 text-gray-500 text-center">No models found</div>
+              )}
+            </ListboxOptions>
+          </div>
+        </Listbox>
       </div>
 
       {/* Provider Selection Section */}
       <div className={styles.container.sectionBase}>
         <label className={styles.label.base}>Provider</label>
-        <div className="relative">
-          <button
-            type="button"
-            onClick={() => setShowProviderDropdown(!showProviderDropdown)}
-            className={styles.button.dropdown}
-          >
-            <span>{selectedProvider || 'Select a provider...'}</span>
-            <ChevronDown
-              size={18}
-              className={`transition-transform ${showModelDropdown ? 'rotate-180' : ''}`}
-            />
-          </button>
-
-          {showProviderDropdown && (
-            <div className={styles.container.dropdown}>
-              <div className={styles.container.dropdownContent}>
-                {currentModel && currentModel.providers.sort((a, b) => a.inputPrice + a.outputPrice - b.inputPrice - b.outputPrice).map((p) => (
-                  <button
-                    key={p.provider}
-                    type="button"
-                    onClick={() => { setSelectedProvider(p.provider); setShowProviderDropdown(false); }}
-                    className="w-full text-left px-4 py-3 hover:bg-blue-50 border-b border-gray-200 last:border-b-0 focus:outline-none focus:bg-blue-50"
-                  >
-                    <div className="font-medium text-gray-900">{p.provider}</div>
-                    <div className={styles.text.mutedSmallMt}>
-                       ${p.inputPrice.toFixed(4)} / ${p.outputPrice.toFixed(4)} per M tokens
-                       • Context: {(p.contextLength / 1000).toFixed(0)}K tokens
-                    </div>
-                  </button>
-                ))}
-                {!currentModel || currentModel.providers.length === 0 && (
-                  <div className="px-4 py-3 text-gray-500 text-center">No providers found</div>
-                )}
-              </div>
-            </div>
-          )}
-        </div>
+        <Listbox value={selectedProvider} onChange={(provider) => {
+          setSelectedProvider(provider);
+        }} disabled={!currentModel}>
+          <div className="relative">
+            <ListboxButton className={styles.button.dropdown}>
+              <span>{selectedProvider || 'Select a provider...'}</span>
+              <ChevronDown size={18} className="ml-auto" />
+            </ListboxButton>
+            <ListboxOptions className={styles.container.dropdown}>
+              {currentModel && currentModel.providers.sort((a, b) => a.inputPrice + a.outputPrice - b.inputPrice - b.outputPrice).map((p) => (
+                <ListboxOption key={p.provider} value={p.provider} className="w-full text-left px-4 py-3 hover:bg-blue-50 border-b border-gray-200 last:border-b-0 cursor-pointer data-selected:bg-blue-100">
+                  <div className="font-medium text-gray-900">{p.provider}</div>
+                  <div className={styles.text.mutedSmallMt}>
+                     ${p.inputPrice.toFixed(4)} / ${p.outputPrice.toFixed(4)} per M tokens
+                     • Context: {(p.contextLength / 1000).toFixed(0)}K tokens
+                  </div>
+                </ListboxOption>
+              ))}
+              {!currentModel || currentModel.providers.length === 0 && (
+                <div className="px-4 py-3 text-gray-500 text-center">No providers found</div>
+              )}
+            </ListboxOptions>
+          </div>
+        </Listbox>
       </div>
 
       {/* Provider Info Section */}

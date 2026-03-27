@@ -13,6 +13,7 @@
   },
   "dependencies": {
     "@ai-sdk/gateway": "^3.0.78",
+    "@headlessui/react": "^2.2.9",
     "ai": "^6.0.136",
     "bcrypt-ts": "^8.0.1",
     "dotenv": "^17.3.1",
