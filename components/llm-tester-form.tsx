@@ -13,11 +13,6 @@ interface Message {
   reasoning?: string;
 }
 
-interface ParameterValue {
-  type: 'default' | 'custom';
-  value?: number;
-}
-
 export default function LLMTesterForm() {
   const [models, setModels] = useState<ModelInfo[]>([]);
   const [loading, setLoading] = useState(true);
@@ -36,19 +31,19 @@ export default function LLMTesterForm() {
   const [messages, setMessages] = useState<Message[]>([]);
 
   const [parameters, setParameters] = useState<{
-    maxOutputTokens: ParameterValue;
-    temperature: ParameterValue;
-    topP: ParameterValue;
-    topK: ParameterValue;
-    presencePenalty: ParameterValue;
-    frequencyPenalty: ParameterValue;
+    maxOutputTokens: number | undefined;
+    temperature: number | undefined;
+    topP: number | undefined;
+    topK: number | undefined;
+    presencePenalty: number | undefined;
+    frequencyPenalty: number | undefined;
   }>({
-    maxOutputTokens: { type: 'default' },
-    temperature: { type: 'default' },
-    topP: { type: 'default' },
-    topK: { type: 'default' },
-    presencePenalty: { type: 'default' },
-    frequencyPenalty: { type: 'default' },
+    maxOutputTokens: undefined,
+    temperature: undefined,
+    topP: undefined,
+    topK: undefined,
+    presencePenalty: undefined,
+    frequencyPenalty: undefined,
   });
 
   useEffect(() => {
@@ -115,15 +110,11 @@ export default function LLMTesterForm() {
   // Parameter management
   const handleParameterChange = (
     param: keyof typeof parameters,
-    type: 'default' | 'custom',
-    value?: number
+    value: number | undefined
   ) => {
     setParameters((prev) => ({
       ...prev,
-      [param]: {
-        type,
-        value: type === 'custom' ? value : undefined,
-      },
+      [param]: value,
     }));
   };
 
@@ -406,30 +397,29 @@ export default function LLMTesterForm() {
                 <div className="flex gap-2">
                   <button
                     type="button"
-                    onClick={() => handleParameterChange(paramKey, 'default')}
-                    className={`${paramValue.type === 'default' ? styles.button.secondary : styles.button.secondaryInactive}`}
+                    onClick={() => handleParameterChange(paramKey, undefined)}
+                    className={`${paramValue === undefined ? styles.button.secondary : styles.button.secondaryInactive}`}
                   >
                     Default
                   </button>
                   <button
                     type="button"
-                    onClick={() => handleParameterChange(paramKey, 'custom')}
-                    className={`${paramValue.type === 'custom' ? styles.button.secondary : styles.button.secondaryInactive}`}
+                    onClick={() => handleParameterChange(paramKey, paramValue ?? 0)}
+                    className={`${paramValue !== undefined ? styles.button.secondary : styles.button.secondaryInactive}`}
                   >
                     Custom
                   </button>
                 </div>
-                {paramValue.type === 'custom' && (
+                {paramValue !== undefined && (
                   <input
                     type="number"
                     step={param.step}
                     min={param.min}
                     max={param.max}
-                    value={paramValue.value || ''}
+                    value={paramValue}
                     onChange={(e) =>
                       handleParameterChange(
                         paramKey,
-                        'custom',
                         e.target.value ? parseFloat(e.target.value) : undefined
                       )
                     }
