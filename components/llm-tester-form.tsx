@@ -234,7 +234,7 @@ export default function LLMTesterForm() {
                     • ${model.providers.length > 0 ? (Math.min(...model.providers.map((p) => p.inputPrice))).toFixed(4) : 'N/A'}{' '}
                     / ${model.providers.length > 0 ? (Math.min(...model.providers.map((p) => p.outputPrice))).toFixed(4) : 'N/A'} per M tokens
                     • Context: {model.providers.length > 0 ? (Math.max(...model.providers.map((p) => p.contextLength)) / 1000).toFixed(0) : 'N/A'}K tokens
-                    • Created: {model.created ? new Date(model.created).toLocaleDateString() : 'N/A'}
+                     • Created: {model.created ? new Date(model.created).toLocaleDateString('en-US', { year: 'numeric', month: 'short' }) : 'N/A'}
                     • {model.reasoning ? 'Reasoning' : 'Not Reasoning'}
                 </div>
               </ListboxOption>
@@ -284,7 +284,7 @@ export default function LLMTesterForm() {
               )}
               <div>${currentProvider.inputPrice.toFixed(4)} / ${currentProvider.outputPrice.toFixed(4)} per M tokens
                    • Context: {(currentProvider.contextLength / 1000).toFixed(0)}K tokens
-                   • Created: {currentModel.created ? new Date(currentModel.created).toLocaleDateString() : 'N/A'}</div>
+                   • Created: {currentModel.created ? new Date(currentModel.created).toLocaleDateString('en-US', { year: 'numeric', month: 'short' }) : 'N/A'}</div>
             </div>
           </div>
         </div>
