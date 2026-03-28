@@ -160,7 +160,6 @@ export default function LLMTesterForm() {
         <label className={styles.label.base}>AI Model</label>
         <Listbox value={selectedModelId} onChange={(modelId) => {
           setSelectedModelId(modelId);
-          setModelSearchInput('');
           const m = models.find((m) => m.id === modelId);
           if (m?.providers.length === 1) {
             setSelectedProvider(m?.providers[0].provider);
