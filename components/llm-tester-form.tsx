@@ -4,6 +4,7 @@ import { useState, useEffect, useMemo } from 'react';
 import { Listbox, ListboxButton, ListboxOptions, ListboxOption } from '@headlessui/react';
 import { ChevronDown, Trash2, Plus, ArrowDownAz, ArrowDown01, Calendar } from 'lucide-react';
 import { fetchAvailableModels, type ModelInfo } from '@/app/actions/models';
+import { callModel } from '@/app/actions/call';
 import { styles } from '@/components/styles';
 
 interface Message {
@@ -17,6 +18,9 @@ export default function LLMTesterForm() {
   const [models, setModels] = useState<ModelInfo[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [submitting, setSubmitting] = useState(false);
+  const [response, setResponse] = useState<string | null>(null);
+  const [submitError, setSubmitError] = useState<string | null>(null);
 
   // Form state
   const [selectedModelId, setSelectedModelId] = useState<string>('');
@@ -29,6 +33,7 @@ export default function LLMTesterForm() {
   const [systemPrompt, setSystemPrompt] = useState('');
   const [inputPrompt, setInputPrompt] = useState('');
   const [messages, setMessages] = useState<Message[]>([]);
+  const [mode, setMode] = useState<'prompt' | 'history'>('prompt');
 
   const [parameters, setParameters] = useState<{
     maxOutputTokens: number | undefined;
@@ -130,17 +135,53 @@ export default function LLMTesterForm() {
     }));
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    console.log({
-      modelId: selectedModelId,
-      provider: selectedProvider,
-      systemPrompt,
-      inputPrompt,
-      messages,
-      parameters,
-    });
-    // TODO: Send to server
+    
+    // Validate required fields
+    if (!selectedModelId || !selectedProvider) {
+      setSubmitError('Please select a model and provider');
+      return;
+    }
+
+    if (!systemPrompt.trim()) {
+      setSubmitError('Please provide a system prompt');
+      return;
+    }
+
+    if (mode === 'prompt') {
+      if (!inputPrompt.trim()) {
+        setSubmitError('Please provide an input prompt');
+        return;
+      }
+    } else {
+      if (messages.length === 0) {
+        setSubmitError('Please add at least one message to the conversation history');
+        return;
+      }
+    }
+
+    setSubmitting(true);
+    setSubmitError(null);
+    setResponse(null);
+
+    try {
+      const result = await callModel({
+        modelId: selectedModelId,
+        provider: selectedProvider,
+        systemPrompt,
+        inputPrompt: mode === 'prompt' ? inputPrompt : '',
+        messages: mode === 'history' ? messages : [],
+        parameters,
+      });
+      setResponse(result);
+    } catch (err) {
+      const message = err instanceof Error ? err.message : 'An error occurred while calling the model';
+      setSubmitError(message);
+      console.error('Failed to call model:', err);
+    } finally {
+      setSubmitting(false);
+    }
   };
 
   if (loading) {
@@ -303,22 +344,46 @@ export default function LLMTesterForm() {
         />
       </div>
 
-      {/* Input Prompt Section */}
+      {/* Mode Selection */}
       <div className={styles.container.sectionBase}>
-        <label htmlFor="input-prompt" className={styles.label.base}>
-          Input Prompt
-        </label>
-        <textarea
-          id="input-prompt"
-          value={inputPrompt}
-          onChange={(e) => setInputPrompt(e.target.value)}
-          placeholder="Enter your question or request..."
-          className={`${styles.input.base} min-h-24 font-mono text-sm`}
-        />
+        <label className={styles.label.base}>Conversation Mode</label>
+        <div className="flex gap-2">
+          <button
+            type="button"
+            onClick={() => setMode('prompt')}
+            className={mode === 'prompt' ? styles.button.secondary : styles.button.secondaryInactive}
+          >
+            Input Prompt
+          </button>
+          <button
+            type="button"
+            onClick={() => setMode('history')}
+            className={mode === 'history' ? styles.button.secondary : styles.button.secondaryInactive}
+          >
+            Message History
+          </button>
+        </div>
       </div>
 
+      {/* Input Prompt Section */}
+      {mode === 'prompt' && (
+        <div className={styles.container.sectionBase}>
+          <label htmlFor="input-prompt" className={styles.label.base}>
+            Input Prompt
+          </label>
+          <textarea
+            id="input-prompt"
+            value={inputPrompt}
+            onChange={(e) => setInputPrompt(e.target.value)}
+            placeholder="Enter your question or request..."
+            className={`${styles.input.base} min-h-24 font-mono text-sm`}
+          />
+        </div>
+      )}
+
       {/* Conversation History Section */}
-      <div className={styles.container.section}>
+      {mode === 'history' && (
+        <div className={styles.container.section}>
         <label className={styles.label.base}>Conversation History</label>
 
         <div className={styles.container.section}>
@@ -388,7 +453,8 @@ export default function LLMTesterForm() {
             Add Message
           </button>
         </div>
-      </div>
+        </div>
+      )}
 
       {/* Parameters Section */}
       <div className="space-y-4">
@@ -452,10 +518,30 @@ export default function LLMTesterForm() {
       {/* Submit Button */}
       <button
         type="submit"
-        className={`${styles.button.primary} w-full py-3 font-semibold`}
+        disabled={submitting}
+        className={`${submitting ? styles.button.disabled : styles.button.primary} w-full py-3 font-semibold`}
       >
-        Send Request
+        {submitting ? 'Sending Request...' : 'Send Request'}
       </button>
+
+      {/* Submit Error */}
+      {submitError && (
+        <div className={styles.error}>
+          {submitError}
+        </div>
+      )}
+
+      {/* Response Display */}
+      {response && (
+        <div className={styles.container.sectionBase}>
+          <label className={styles.label.base}>Model Response</label>
+          <div className={`${styles.container.infoCard} bg-green-50 border-green-200`}>
+            <pre className="text-sm font-mono whitespace-pre-wrap">
+              {response}
+            </pre>
+          </div>
+        </div>
+      )}
     </form>
   );
 }

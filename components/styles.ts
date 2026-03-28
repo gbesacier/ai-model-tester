@@ -29,6 +29,7 @@ export const styles = {
     delete: 'p-1 text-red-600 hover:bg-red-50 rounded transition-colors',
     dropdown: 'w-full px-4 py-2 text-left border border-gray-300 rounded-lg bg-white flex items-center justify-between hover:border-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500',
     auth: 'w-full rounded bg-blue-600 text-white py-2 font-semibold hover:bg-blue-700 disabled:bg-blue-300 transition-colors',
+    disabled: 'bg-blue-300 text-white rounded cursor-not-allowed opacity-60 transition-colors',
   },
 
   // Containers & Cards
