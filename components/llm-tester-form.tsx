@@ -171,7 +171,7 @@ export default function LLMTesterForm() {
             <span>{selectedModelId || 'Select a model...'}</span>
             <ChevronDown size={18} className="ml-auto" />
           </ListboxButton>
-          <ListboxOptions anchor="bottom" className={`${styles.container.dropdown} max-h-96 overflow-y-auto`}>
+          <ListboxOptions anchor="bottom" className={`${styles.container.dropdown} w-(--button-width) max-h-96 overflow-y-auto`}>
             <div className="flex gap-2 border-b border-gray-200 p-2 sticky top-0 bg-white z-10">
               <input
                 type="text"
@@ -255,7 +255,7 @@ export default function LLMTesterForm() {
             <span>{selectedProvider || 'Select a provider...'}</span>
             <ChevronDown size={18} className="ml-auto" />
           </ListboxButton>
-          <ListboxOptions anchor="bottom" className={`${styles.container.dropdown} max-h-96 overflow-y-auto`}>
+          <ListboxOptions anchor="bottom" className={`${styles.container.dropdown} w-(--button-width) max-h-96 overflow-y-auto`}>
             {currentModel && currentModel.providers.sort((a, b) => a.inputPrice + a.outputPrice - b.inputPrice - b.outputPrice).map((p) => (
               <ListboxOption key={p.provider} value={p.provider} className="w-full text-left px-4 py-3 hover:bg-blue-50 border-b border-gray-200 last:border-b-0 cursor-pointer data-selected:bg-blue-100">
                 <div className="font-medium text-gray-900">{p.provider}</div>
