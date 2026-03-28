@@ -38,6 +38,7 @@ export const styles = {
     messageCard: 'p-4 border border-gray-200 rounded-lg space-y-3',
     infoCard: 'px-4 py-2 border border-gray-300 rounded-lg bg-gray-50 space-y-2',
     dropdown: 'bg-white border border-gray-300 rounded-lg shadow-lg z-10',
+    listboxOption: 'w-full text-left px-4 py-3 hover:bg-blue-50 border-b border-gray-200 last:border-b-0 cursor-pointer data-selected:bg-blue-100',
     authCard: 'max-w-md w-full bg-white p-8 rounded-xl shadow',
     authPage: 'min-h-screen flex items-center justify-center bg-zinc-100 py-12 px-4',
   },

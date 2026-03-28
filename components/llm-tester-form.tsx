@@ -226,7 +226,7 @@ export default function LLMTesterForm() {
               </button>
             </div>
             {filteredModels.map((model) => (
-              <ListboxOption key={model.id} value={model.id} className="w-full text-left px-4 py-3 hover:bg-blue-50 border-b border-gray-200 last:border-b-0 cursor-pointer data-selected:bg-blue-100">
+              <ListboxOption key={model.id} value={model.id} className={styles.container.listboxOption}>
                 <div className="font-medium text-gray-900">{model.name}</div>
                 <div className={styles.text.mutedSmallMt}>
                   {model.id}
@@ -257,7 +257,7 @@ export default function LLMTesterForm() {
           </ListboxButton>
           <ListboxOptions anchor="bottom" className={`${styles.container.dropdown} w-(--button-width) max-h-96 overflow-y-auto`}>
             {currentModel && currentModel.providers.sort((a, b) => a.inputPrice + a.outputPrice - b.inputPrice - b.outputPrice).map((p) => (
-              <ListboxOption key={p.provider} value={p.provider} className="w-full text-left px-4 py-3 hover:bg-blue-50 border-b border-gray-200 last:border-b-0 cursor-pointer data-selected:bg-blue-100">
+                <ListboxOption key={p.provider} value={p.provider} className={styles.container.listboxOption}>
                 <div className="font-medium text-gray-900">{p.provider}</div>
                 <div className={styles.text.mutedSmallMt}>
                     ${p.inputPrice.toFixed(4)} / ${p.outputPrice.toFixed(4)} per M tokens
