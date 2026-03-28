@@ -229,7 +229,7 @@ export default function LLMTesterForm() {
               <ListboxOption key={model.id} value={model.id} className={styles.container.listboxOption}>
                 <div className="font-medium text-gray-900">{model.name}</div>
                 <div className={styles.text.mutedSmallMt}>
-                  {model.id}
+                  {model.id}{' '}
                     • ${model.providers.length > 0 ? (Math.min(...model.providers.map((p) => p.inputPrice))).toFixed(4) : 'N/A'}{' '}
                     / ${model.providers.length > 0 ? (Math.min(...model.providers.map((p) => p.outputPrice))).toFixed(4) : 'N/A'} per M tokens
                     • Context: {model.providers.length > 0 ? (Math.max(...model.providers.map((p) => p.contextLength)) / 1000).toFixed(0) : 'N/A'}K tokens
