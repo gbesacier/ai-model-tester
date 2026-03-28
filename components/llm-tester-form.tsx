@@ -168,83 +168,81 @@ export default function LLMTesterForm() {
             setSelectedProvider('');
           }
         }}>
-          <div className="relative">
-            <ListboxButton className={styles.button.dropdown}>
-              <span>{selectedModelId || 'Select a model...'}</span>
-              <ChevronDown size={18} className="ml-auto" />
-            </ListboxButton>
-            <ListboxOptions anchor="bottom" className={`${styles.container.dropdown} max-h-96 overflow-y-auto`}>
-              <div className="flex gap-2 border-b border-gray-200 p-2 sticky top-0 bg-white z-10">
-                <input
-                  type="text"
-                  placeholder="Search models..."
-                  value={modelSearchInput}
-                  onChange={(e) => setModelSearchInput(e.target.value)}
-                  className={styles.input.search}
-                  autoFocus
-                />
-                <div>
-                  <label className={styles.label.small}>Context</label>
-                  <select
-                    value={minContextLength ?? ''}
-                    onChange={(e) => setMinContextLength(e.target.value ? parseInt(e.target.value) : null)}
-                    className={styles.input.sm}
-                  >
-                    <option value="">No minimum</option>
-                    <option value="64000">64K+ tokens</option>
-                    <option value="128000">128K+ tokens</option>
-                    <option value="200000">200K+ tokens</option>
-                    <option value="400000">400K+ tokens</option>
-                    <option value="1000000">1M+ tokens</option>
-                  </select>
-                </div>
-                <button
-                  type="button"
-                  onClick={() => setModelSortBy('name')}
-                  className={modelSortBy === 'name' ? styles.button.filter : styles.button.filterInactive}
+          <ListboxButton className={styles.button.dropdown}>
+            <span>{selectedModelId || 'Select a model...'}</span>
+            <ChevronDown size={18} className="ml-auto" />
+          </ListboxButton>
+          <ListboxOptions anchor="bottom" className={`${styles.container.dropdown} w-full max-h-96 overflow-y-auto`}>
+            <div className="flex gap-2 border-b border-gray-200 p-2 sticky top-0 bg-white z-10">
+              <input
+                type="text"
+                placeholder="Search models..."
+                value={modelSearchInput}
+                onChange={(e) => setModelSearchInput(e.target.value)}
+                className={styles.input.search}
+                autoFocus
+              />
+              <div>
+                <label className={styles.label.small}>Context</label>
+                <select
+                  value={minContextLength ?? ''}
+                  onChange={(e) => setMinContextLength(e.target.value ? parseInt(e.target.value) : null)}
+                  className={styles.input.sm}
                 >
-                  <ArrowDownAz /> Name
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setModelSortBy('price')}
-                  className={modelSortBy === 'price' ? styles.button.filter : styles.button.filterInactive}
-                >
-                  <ArrowDown01 /> Price
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setModelSortBy('created')}
-                  className={modelSortBy === 'created' ? styles.button.filter : styles.button.filterInactive}
-                >
-                  <Calendar /> Created
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setFilterReasoning(!filterReasoning)}
-                  className={filterReasoning ? styles.button.filter : styles.button.filterInactive}
-                >
-                  Reasoning
-                </button>
+                  <option value="">No minimum</option>
+                  <option value="64000">64K+ tokens</option>
+                  <option value="128000">128K+ tokens</option>
+                  <option value="200000">200K+ tokens</option>
+                  <option value="400000">400K+ tokens</option>
+                  <option value="1000000">1M+ tokens</option>
+                </select>
               </div>
-              {filteredModels.map((model) => (
-                <ListboxOption key={model.id} value={model.id} className="w-full text-left px-4 py-3 hover:bg-blue-50 border-b border-gray-200 last:border-b-0 cursor-pointer data-selected:bg-blue-100">
-                  <div className="font-medium text-gray-900">{model.name}</div>
-                  <div className={styles.text.mutedSmallMt}>
-                    {model.id}
-                     • ${model.providers.length > 0 ? (Math.min(...model.providers.map((p) => p.inputPrice))).toFixed(4) : 'N/A'}{' '}
-                     / ${model.providers.length > 0 ? (Math.min(...model.providers.map((p) => p.outputPrice))).toFixed(4) : 'N/A'} per M tokens
-                     • Context: {model.providers.length > 0 ? (Math.max(...model.providers.map((p) => p.contextLength)) / 1000).toFixed(0) : 'N/A'}K tokens
-                     • Created: {model.created ? new Date(model.created).toLocaleDateString() : 'N/A'}
-                     • {model.reasoning ? 'Reasoning' : 'Not Reasoning'}
-                  </div>
-                </ListboxOption>
-              ))}
-              {filteredModels.length === 0 && (
-                <div className="px-4 py-3 text-gray-500 text-center">No models found</div>
-              )}
-            </ListboxOptions>
-          </div>
+              <button
+                type="button"
+                onClick={() => setModelSortBy('name')}
+                className={modelSortBy === 'name' ? styles.button.filter : styles.button.filterInactive}
+              >
+                <ArrowDownAz /> Name
+              </button>
+              <button
+                type="button"
+                onClick={() => setModelSortBy('price')}
+                className={modelSortBy === 'price' ? styles.button.filter : styles.button.filterInactive}
+              >
+                <ArrowDown01 /> Price
+              </button>
+              <button
+                type="button"
+                onClick={() => setModelSortBy('created')}
+                className={modelSortBy === 'created' ? styles.button.filter : styles.button.filterInactive}
+              >
+                <Calendar /> Created
+              </button>
+              <button
+                type="button"
+                onClick={() => setFilterReasoning(!filterReasoning)}
+                className={filterReasoning ? styles.button.filter : styles.button.filterInactive}
+              >
+                Reasoning
+              </button>
+            </div>
+            {filteredModels.map((model) => (
+              <ListboxOption key={model.id} value={model.id} className="w-full text-left px-4 py-3 hover:bg-blue-50 border-b border-gray-200 last:border-b-0 cursor-pointer data-selected:bg-blue-100">
+                <div className="font-medium text-gray-900">{model.name}</div>
+                <div className={styles.text.mutedSmallMt}>
+                  {model.id}
+                    • ${model.providers.length > 0 ? (Math.min(...model.providers.map((p) => p.inputPrice))).toFixed(4) : 'N/A'}{' '}
+                    / ${model.providers.length > 0 ? (Math.min(...model.providers.map((p) => p.outputPrice))).toFixed(4) : 'N/A'} per M tokens
+                    • Context: {model.providers.length > 0 ? (Math.max(...model.providers.map((p) => p.contextLength)) / 1000).toFixed(0) : 'N/A'}K tokens
+                    • Created: {model.created ? new Date(model.created).toLocaleDateString() : 'N/A'}
+                    • {model.reasoning ? 'Reasoning' : 'Not Reasoning'}
+                </div>
+              </ListboxOption>
+            ))}
+            {filteredModels.length === 0 && (
+              <div className="px-4 py-3 text-gray-500 text-center">No models found</div>
+            )}
+          </ListboxOptions>
         </Listbox>
       </div>
 
@@ -254,26 +252,24 @@ export default function LLMTesterForm() {
         <Listbox value={selectedProvider} onChange={(provider) => {
           setSelectedProvider(provider);
         }} disabled={!currentModel}>
-          <div className="relative">
-            <ListboxButton className={styles.button.dropdown}>
-              <span>{selectedProvider || 'Select a provider...'}</span>
-              <ChevronDown size={18} className="ml-auto" />
-            </ListboxButton>
-            <ListboxOptions anchor="bottom" className={`${styles.container.dropdown} max-h-96 overflow-y-auto`}>
-              {currentModel && currentModel.providers.sort((a, b) => a.inputPrice + a.outputPrice - b.inputPrice - b.outputPrice).map((p) => (
-                <ListboxOption key={p.provider} value={p.provider} className="w-full text-left px-4 py-3 hover:bg-blue-50 border-b border-gray-200 last:border-b-0 cursor-pointer data-selected:bg-blue-100">
-                  <div className="font-medium text-gray-900">{p.provider}</div>
-                  <div className={styles.text.mutedSmallMt}>
-                     ${p.inputPrice.toFixed(4)} / ${p.outputPrice.toFixed(4)} per M tokens
-                     • Context: {(p.contextLength / 1000).toFixed(0)}K tokens
-                  </div>
-                </ListboxOption>
-              ))}
-              {!currentModel || currentModel.providers.length === 0 && (
-                <div className="px-4 py-3 text-gray-500 text-center">No providers found</div>
-              )}
-            </ListboxOptions>
-          </div>
+          <ListboxButton className={styles.button.dropdown}>
+            <span>{selectedProvider || 'Select a provider...'}</span>
+            <ChevronDown size={18} className="ml-auto" />
+          </ListboxButton>
+          <ListboxOptions anchor="bottom" className={`${styles.container.dropdown} w-full max-h-96 overflow-y-auto`}>
+            {currentModel && currentModel.providers.sort((a, b) => a.inputPrice + a.outputPrice - b.inputPrice - b.outputPrice).map((p) => (
+              <ListboxOption key={p.provider} value={p.provider} className="w-full text-left px-4 py-3 hover:bg-blue-50 border-b border-gray-200 last:border-b-0 cursor-pointer data-selected:bg-blue-100">
+                <div className="font-medium text-gray-900">{p.provider}</div>
+                <div className={styles.text.mutedSmallMt}>
+                    ${p.inputPrice.toFixed(4)} / ${p.outputPrice.toFixed(4)} per M tokens
+                    • Context: {(p.contextLength / 1000).toFixed(0)}K tokens
+                </div>
+              </ListboxOption>
+            ))}
+            {!currentModel || currentModel.providers.length === 0 && (
+              <div className="px-4 py-3 text-gray-500 text-center">No providers found</div>
+            )}
+          </ListboxOptions>
         </Listbox>
       </div>
 
