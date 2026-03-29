@@ -171,7 +171,7 @@ export default function LLMTesterForm() {
         provider: selectedProvider,
         systemPrompt,
         inputPrompt: mode === 'prompt' ? inputPrompt : '',
-        messages: mode === 'history' ? messages : [],
+        messages: mode === 'history' ? messages.map(({ id, ...msg }) => msg) : [],
         parameters,
       });
       setResponse(result);

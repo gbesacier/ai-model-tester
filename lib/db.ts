@@ -1,6 +1,6 @@
 import postgres from "postgres";
 import { drizzle } from "drizzle-orm/postgres-js";
-import { pgTable, boolean, serial, text, integer, timestamp } from "drizzle-orm/pg-core";
+import { pgTable, boolean, serial, text, integer, timestamp, json, uniqueIndex } from "drizzle-orm/pg-core";
 
 const client = postgres(process.env.POSTGRES_URL!);
 export const db = drizzle(client);
@@ -27,3 +27,19 @@ export const modelProviders = pgTable("model_providers", {
   outputPrice: integer("output_price").notNull(),
   contextLength: integer("context_length").notNull(),
 });
+
+export const promptLibrary = pgTable(
+  "prompt_library",
+  {
+    id: serial("id").primaryKey(),
+    promptHash: text("prompt_hash").notNull(),
+    systemPrompt: text("system_prompt").notNull(),
+    inputPrompt: text("input_prompt"),
+    messages: json("messages"),
+    usageCount: integer("usage_count").default(0).notNull(),
+    created: timestamp("created").defaultNow().notNull(),
+  },
+  (table) => [
+    uniqueIndex("prompt_library_hash_idx").on(table.promptHash),
+  ]
+);

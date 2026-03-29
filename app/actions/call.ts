@@ -4,14 +4,8 @@ import { generateText, type ModelMessage } from 'ai';
 import { gateway, GatewayProviderOptions } from '@ai-sdk/gateway';
 import { getServerSession } from 'next-auth/next';
 import { authOptions } from '@/lib/auth';
+import { saveOrGetPrompt, type RequestMessage } from '@/lib/prompt-library';
 
-
-export interface RequestMessage {
-  id: string;
-  role: 'system' | 'assistant' | 'user';
-  text: string;
-  reasoning?: string;
-}
 
 export interface ModelCallRequest {
   modelId: string;
@@ -96,6 +90,18 @@ export async function callModel(request: ModelCallRequest): Promise<string> {
 
     // Call the model
     const response = await generateText(cleanCommonParams);
+
+    // Save prompt to library
+    try {
+      await saveOrGetPrompt({
+        systemPrompt: request.systemPrompt,
+        inputPrompt: request.inputPrompt || undefined,
+        messages: request.messages.length > 0 ? request.messages : undefined,
+      });
+    } catch (error) {
+      console.error('Failed to save prompt to library:', error);
+      // Don't throw - prompt library is optional, model call succeeded
+    }
 
     return response.text;
   } catch (error) {
