@@ -43,3 +43,14 @@ export const promptLibrary = pgTable(
     uniqueIndex("prompt_library_hash_idx").on(table.promptHash),
   ]
 );
+
+export const modelCalls = pgTable("model_calls", {
+  id: serial("id").primaryKey(),
+  userEmail: text("user_email").notNull().references(() => users.email, { onDelete: "restrict" }),
+  modelId: text("model_id").notNull().references(() => models.id, { onDelete: "restrict" }),
+  promptHash: text("prompt_hash").notNull().references(() => promptLibrary.promptHash, { onDelete: "restrict" }),
+  parameters: json("parameters").notNull(),
+  result: text("result").notNull(),
+  rating: integer("rating"),
+  created: timestamp("created").defaultNow().notNull(),
+});

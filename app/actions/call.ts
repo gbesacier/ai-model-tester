@@ -4,7 +4,8 @@ import { generateText, type ModelMessage } from 'ai';
 import { gateway, GatewayProviderOptions } from '@ai-sdk/gateway';
 import { getServerSession } from 'next-auth/next';
 import { authOptions } from '@/lib/auth';
-import { saveOrGetPrompt, type RequestMessage } from '@/lib/prompt-library';
+import { saveOrGetPrompt, type RequestMessage, generatePromptHash } from '@/lib/prompt-library';
+import { db, modelCalls } from '@/lib/db';
 
 
 export interface ModelCallRequest {
@@ -91,8 +92,15 @@ export async function callModel(request: ModelCallRequest): Promise<string> {
     // Call the model
     const response = await generateText(cleanCommonParams);
 
-    // Save prompt to library
+    // Save prompt to library and get its hash
+    let promptHash: string;
     try {
+      promptHash = generatePromptHash({
+        systemPrompt: request.systemPrompt,
+        inputPrompt: request.inputPrompt || undefined,
+        messages: request.messages.length > 0 ? request.messages : undefined,
+      });
+
       await saveOrGetPrompt({
         systemPrompt: request.systemPrompt,
         inputPrompt: request.inputPrompt || undefined,
@@ -101,6 +109,24 @@ export async function callModel(request: ModelCallRequest): Promise<string> {
     } catch (error) {
       console.error('Failed to save prompt to library:', error);
       // Don't throw - prompt library is optional, model call succeeded
+      promptHash = '';
+    }
+
+    // Save model call to database
+    try {
+      if (session?.user?.email && promptHash) {
+        await db.insert(modelCalls).values({
+          userEmail: session.user.email,
+          modelId: request.modelId,
+          promptHash,
+          parameters: request.parameters,
+          result: response.text,
+          rating: null,
+        });
+      }
+    } catch (error) {
+      console.error('Failed to save model call to database:', error);
+      // Don't throw - database save is optional, model call succeeded
     }
 
     return response.text;
