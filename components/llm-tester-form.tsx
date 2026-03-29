@@ -4,7 +4,7 @@ import { useState, useEffect, useMemo } from 'react';
 import { Listbox, ListboxButton, ListboxOptions, ListboxOption } from '@headlessui/react';
 import { ChevronDown, Trash2, Plus, ArrowDownAz, ArrowDown01, Calendar } from 'lucide-react';
 import { fetchAvailableModels, type ModelInfo } from '@/app/actions/models';
-import { callModel } from '@/app/actions/call';
+import { callModel, updateModelCallRating } from '@/app/actions/call';
 import { styles } from '@/components/styles';
 
 interface Message {
@@ -20,6 +20,9 @@ export default function LLMTesterForm() {
   const [error, setError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
   const [response, setResponse] = useState<string | null>(null);
+  const [callId, setCallId] = useState<number | null>(null);
+  const [rating, setRating] = useState<number>(50);
+  const [ratingInteracted, setRatingInteracted] = useState(false);
   const [submitError, setSubmitError] = useState<string | null>(null);
 
   // Form state
@@ -164,6 +167,9 @@ export default function LLMTesterForm() {
     setSubmitting(true);
     setSubmitError(null);
     setResponse(null);
+    setCallId(null);
+    setRating(50);
+    setRatingInteracted(false);
 
     try {
       const result = await callModel({
@@ -174,7 +180,8 @@ export default function LLMTesterForm() {
         messages: mode === 'history' ? messages.map(({ id, ...msg }) => msg) : [],
         parameters,
       });
-      setResponse(result);
+      setResponse(result.text);
+      setCallId(result.callId);
     } catch (err) {
       const message = err instanceof Error ? err.message : 'An error occurred while calling the model';
       setSubmitError(message);
@@ -535,10 +542,59 @@ export default function LLMTesterForm() {
       {response && (
         <div className={styles.container.sectionBase}>
           <label className={styles.label.base}>Model Response</label>
-          <div className={`${styles.container.infoCard} bg-green-50 border-green-200`}>
-            <pre className="text-sm font-mono whitespace-pre-wrap">
+          <div className="rounded-lg border-2 border-green-200 bg-green-50 p-4 mb-4">
+            <div className="text-sm font-mono text-gray-800 whitespace-pre-wrap break-words leading-relaxed">
               {response}
-            </pre>
+            </div>
+          </div>
+
+          {/* Rating Section */}
+          <div className="space-y-4">
+            <div>
+              <label className={styles.label.base}>Rate this Result</label>
+              <p className={styles.text.mutedSmall}>How satisfied are you with this response?</p>
+            </div>
+            
+            <div className="flex items-center gap-4">
+              <input
+                type="range"
+                min="0"
+                max="100"
+                value={rating}
+                onChange={async (e) => {
+                  const newRating = parseInt(e.target.value);
+                  setRating(newRating);
+                  setRatingInteracted(true);
+                  
+                  // Save rating to database
+                  if (callId) {
+                    try {
+                      await updateModelCallRating(callId, newRating);
+                    } catch (err) {
+                      console.error('Failed to save rating:', err);
+                    }
+                  }
+                }}
+                className={`flex-1 h-3 rounded-lg appearance-none cursor-pointer ${
+                  ratingInteracted
+                    ? 'bg-blue-300 accent-blue-600'
+                    : 'bg-gray-300 accent-gray-500'
+                }`}
+              />
+              <div className={`flex items-center justify-center w-14 h-14 rounded-lg border-2 ${
+                ratingInteracted ? 'border-blue-300 bg-blue-50' : 'border-gray-300 bg-gray-50'
+              }`}>
+                <span className={`text-2xl font-bold ${ratingInteracted ? 'text-blue-600' : 'text-gray-600'}`}>{rating}</span>
+              </div>
+            </div>
+
+            <div className="flex justify-between text-xs text-gray-500 px-1">
+              <span>0</span>
+              <span>25</span>
+              <span>50</span>
+              <span>75</span>
+              <span>100</span>
+            </div>
           </div>
         </div>
       )}

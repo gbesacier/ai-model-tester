@@ -6,6 +6,7 @@ import { getServerSession } from 'next-auth/next';
 import { authOptions } from '@/lib/auth';
 import { saveOrGetPrompt, type RequestMessage, generatePromptHash } from '@/lib/prompt-library';
 import { db, modelCalls } from '@/lib/db';
+import { eq } from 'drizzle-orm';
 
 
 export interface ModelCallRequest {
@@ -24,7 +25,7 @@ export interface ModelCallRequest {
   };
 }
 
-export async function callModel(request: ModelCallRequest): Promise<string> {
+export async function callModel(request: ModelCallRequest): Promise<{ text: string; callId: number }> {
   const session = await getServerSession(authOptions);
   if (!session) {
     throw new Error('Unauthorized: You must be logged in to access this resource');
@@ -113,26 +114,51 @@ export async function callModel(request: ModelCallRequest): Promise<string> {
     }
 
     // Save model call to database
+    let callId = 0;
     try {
       if (session?.user?.email && promptHash) {
-        await db.insert(modelCalls).values({
+        const result = await db.insert(modelCalls).values({
           userEmail: session.user.email,
           modelId: request.modelId,
           promptHash,
           parameters: request.parameters,
           result: response.text,
           rating: null,
-        });
+        }).returning({ id: modelCalls.id });
+        
+        if (result.length > 0) {
+          callId = result[0].id;
+        }
       }
     } catch (error) {
       console.error('Failed to save model call to database:', error);
       // Don't throw - database save is optional, model call succeeded
     }
 
-    return response.text;
+    return {
+      text: response.text,
+      callId,
+    };
   } catch (error) {
     console.error('Failed to call model:', error);
     throw new Error(`Failed to call model: ${error instanceof Error ? error.message : 'Unknown error'}`);
+  }
+}
+
+export async function updateModelCallRating(callId: number, rating: number): Promise<void> {
+  const session = await getServerSession(authOptions);
+  if (!session) {
+    throw new Error('Unauthorized: You must be logged in to access this resource');
+  }
+
+  try {
+    await db
+      .update(modelCalls)
+      .set({ rating })
+      .where(eq(modelCalls.id, callId));
+  } catch (error) {
+    console.error('Failed to update model call rating:', error);
+    throw new Error(`Failed to update rating: ${error instanceof Error ? error.message : 'Unknown error'}`);
   }
 }
 
