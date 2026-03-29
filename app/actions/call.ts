@@ -1,3 +1,5 @@
+'use server';
+
 import { generateText, type ModelMessage } from 'ai';
 import { gateway, GatewayProviderOptions } from '@ai-sdk/gateway';
 import { getServerSession } from 'next-auth/next';
