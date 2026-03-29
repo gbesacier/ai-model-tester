@@ -1,10 +1,12 @@
 'use client';
 
 import { useState, useEffect, useMemo } from 'react';
+import { useSearchParams } from 'next/navigation';
 import { Listbox, ListboxButton, ListboxOptions, ListboxOption } from '@headlessui/react';
 import { ChevronDown, Trash2, Plus, ArrowDownAz, ArrowDown01, Calendar } from 'lucide-react';
 import { fetchAvailableModels, type ModelInfo } from '@/app/actions/models';
 import { callModel, updateModelCallRating } from '@/app/actions/call';
+import { getAvailablePromptsForResults } from '@/app/actions/results';
 import { styles } from '@/components/styles';
 
 interface Message {
@@ -15,6 +17,7 @@ interface Message {
 }
 
 export default function LLMTesterForm() {
+  const searchParams = useSearchParams();
   const [models, setModels] = useState<ModelInfo[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -70,6 +73,60 @@ export default function LLMTesterForm() {
 
     loadModels();
   }, []);
+
+  // Load prompt and other data from URL parameters
+  useEffect(() => {
+    const loadFromParams = async () => {
+      const promptHash = searchParams.get('prompt');
+      const model = searchParams.get('model');
+      const result = searchParams.get('result');
+      const rating = searchParams.get('rating');
+      const callId = searchParams.get('callId');
+
+      if (promptHash) {
+        try {
+          const prompts = await getAvailablePromptsForResults();
+          const prompt = prompts.find((p) => p.hash === promptHash);
+          if (prompt) {
+            setSystemPrompt(prompt.systemPrompt);
+            if (prompt.inputPrompt) {
+              setInputPrompt(prompt.inputPrompt);
+            }
+          }
+        } catch (err) {
+          console.error('Failed to load prompt:', err);
+        }
+      }
+
+      if (model && models.length > 0) {
+        const foundModel = models.find((m) => m.id === model);
+        if (foundModel) {
+          setSelectedModelId(model);
+          // Set the first provider if available
+          if (foundModel.providers.length > 0) {
+            setSelectedProvider(foundModel.providers[0].provider);
+          }
+        }
+      }
+
+      if (result) {
+        setResponse(decodeURIComponent(result));
+      }
+
+      if (rating) {
+        setRating(parseInt(rating));
+        setRatingInteracted(true);
+      }
+
+      if (callId) {
+        setCallId(parseInt(callId));
+      }
+    };
+
+    if (models.length > 0) {
+      loadFromParams();
+    }
+  }, [searchParams, models]);
 
   const currentModel = models.find((m) => m.id === selectedModelId);
   const currentProvider = currentModel?.providers.find((p) => p.provider === selectedProvider);
@@ -543,7 +600,7 @@ export default function LLMTesterForm() {
         <div className={styles.container.sectionBase}>
           <label className={styles.label.base}>Model Response</label>
           <div className="rounded-lg border-2 border-green-200 bg-green-50 p-4 mb-4">
-            <div className="text-sm font-mono text-gray-800 whitespace-pre-wrap break-words leading-relaxed">
+            <div className="text-sm font-mono text-gray-800 whitespace-pre-wrap text-wrap leading-relaxed">
               {response}
             </div>
           </div>
