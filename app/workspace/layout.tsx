@@ -1,8 +1,22 @@
+import { Suspense } from "react";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { redirect } from "next/navigation";
 import WorkspaceTabs from "@/components/workspace-tabs";
 import { getGatewayCredits } from "@/app/actions/gateway";
+
+async function CreditsDisplay() {
+  const result = await getGatewayCredits();
+  if (!result.success || result.balance === undefined) return null;
+  return (
+    <div className="bg-blue-50 border border-blue-200 rounded-lg px-4 py-2">
+      <div className="text-sm text-gray-600">Credits Remaining</div>
+      <div className="text-lg font-semibold text-blue-600">
+        ${result.balance.toFixed(2)}
+      </div>
+    </div>
+  );
+}
 
 export default async function WorkspaceLayout({ children }: { children: React.ReactNode }) {
   const session = await getServerSession(authOptions);
@@ -11,15 +25,15 @@ export default async function WorkspaceLayout({ children }: { children: React.Re
     redirect("/");
   }
 
-  let credits: { balance: number; totalUsed: number } | null = null;
-  try {
-    const result = await getGatewayCredits();
-    if (result.success && result.balance !== undefined && result.totalUsed !== undefined) {
-      credits = { balance: result.balance, totalUsed: result.totalUsed };
-    }
-  } catch {
-    // Credits fetch failed — continue without showing credits
-  }
-
-  return <WorkspaceTabs credits={credits}>{children}</WorkspaceTabs>;
+  return (
+    <WorkspaceTabs
+      creditsSlot={
+        <Suspense fallback={<div className="animate-pulse bg-gray-300 rounded px-3 py-1 w-32 h-6" />}>
+          <CreditsDisplay />
+        </Suspense>
+      }
+    >
+      {children}
+    </WorkspaceTabs>
+  );
 }
