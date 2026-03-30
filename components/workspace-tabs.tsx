@@ -2,34 +2,15 @@
 
 import { usePathname, useRouter } from 'next/navigation';
 import { TabGroup, TabList, Tab, TabPanels, TabPanel } from '@headlessui/react';
-import { useEffect, useState } from 'react';
-import { getGatewayCredits } from '@/app/actions/gateway';
 
-export default function WorkspaceTabs({ children }: { children: React.ReactNode }) {
+interface WorkspaceTabsProps {
+  children: React.ReactNode;
+  credits: { balance: number; totalUsed: number } | null;
+}
+
+export default function WorkspaceTabs({ children, credits }: WorkspaceTabsProps) {
   const pathname = usePathname();
   const router = useRouter();
-  const [credits, setCredits] = useState<{ balance: number; totalUsed: number } | null>(null);
-  const [creditsLoading, setCreditsLoading] = useState(true);
-
-  useEffect(() => {
-    const fetchCredits = async () => {
-      try {
-        const result = await getGatewayCredits();
-        if (result.success && result.balance !== undefined && result.totalUsed !== undefined) {
-          setCredits({
-            balance: result.balance,
-            totalUsed: result.totalUsed,
-          });
-        }
-      } catch (error) {
-        console.error('Error fetching credits:', error);
-      } finally {
-        setCreditsLoading(false);
-      }
-    };
-
-    fetchCredits();
-  }, []);
 
   const tabs = [
     { name: 'Tester', path: '/workspace/tester' },
@@ -73,19 +54,15 @@ export default function WorkspaceTabs({ children }: { children: React.ReactNode 
               </TabGroup>
             </div>
             
-            {/* Credits Display - Only shown for logged-in users (validated server-side) */}
-            {(creditsLoading || credits) && (
+            {/* Credits Display */}
+            {credits && (
               <div className="flex items-center gap-2">
-                {creditsLoading ? (
-                  <div className="animate-pulse bg-gray-300 rounded px-3 py-1 w-32 h-6"></div>
-                ) : credits ? (
-                  <div className="bg-blue-50 border border-blue-200 rounded-lg px-4 py-2">
-                    <div className="text-sm text-gray-600">Credits Remaining</div>
-                    <div className="text-lg font-semibold text-blue-600">
-                      ${credits.balance.toFixed(2)}
-                    </div>
+                <div className="bg-blue-50 border border-blue-200 rounded-lg px-4 py-2">
+                  <div className="text-sm text-gray-600">Credits Remaining</div>
+                  <div className="text-lg font-semibold text-blue-600">
+                    ${credits.balance.toFixed(2)}
                   </div>
-                ) : null}
+                </div>
               </div>
             )}
           </div>
