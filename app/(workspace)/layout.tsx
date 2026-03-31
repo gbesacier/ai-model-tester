@@ -1,7 +1,7 @@
 import { Suspense } from "react";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
-import { redirect } from "next/navigation";
+import { unauthorized } from "next/navigation";
 import WorkspaceTabs from "@/components/workspace-tabs";
 import { getGatewayCredits } from "@/app/actions/gateway";
 
@@ -22,7 +22,7 @@ export default async function WorkspaceLayout({ children }: { children: React.Re
   const session = await getServerSession(authOptions);
 
   if (!session) {
-    redirect("/");
+    unauthorized();
   }
 
   return (

@@ -5,14 +5,14 @@ import { useRouter } from "next/navigation";
 import { signIn } from "next-auth/react";
 import { styles } from "@/components/styles";
 
-export default function Home() {
+export default function Unauthorized() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
   const router = useRouter();
 
-  const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
+  const handleSubmit = async (event: React.SyntheticEvent<HTMLFormElement>) => {
     event.preventDefault();
     setError("");
     setLoading(true);
@@ -30,7 +30,7 @@ export default function Home() {
       return;
     }
 
-    router.push("/workspace");
+    router.push("/tester");
   };
 
   return (

@@ -13,9 +13,9 @@ export default function WorkspaceTabs({ children, creditsSlot }: WorkspaceTabsPr
   const router = useRouter();
 
   const tabs = [
-    { name: 'Tester', path: '/workspace/tester' },
-    { name: 'Prompt Library', path: '/workspace/prompt-library' },
-    { name: 'Results', path: '/workspace/results' },
+    { name: 'Tester', path: '/tester' },
+    { name: 'Prompt Library', path: '/prompt-library' },
+    { name: 'Results', path: '/results' },
   ];
 
   const selectedIndex = tabs.findIndex((tab) => pathname === tab.path) ?? 0;
