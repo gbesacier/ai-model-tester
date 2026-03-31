@@ -2,8 +2,8 @@ import { Suspense } from "react";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { unauthorized } from "next/navigation";
-import WorkspaceTabs from "@/components/workspace-tabs";
-import { getGatewayCredits } from "@/app/actions/gateway";
+import WorkspaceTabs from "./workspace-tabs";
+import { getGatewayCredits } from "@/app/gateway";
 
 async function CreditsDisplay() {
   const result = await getGatewayCredits();

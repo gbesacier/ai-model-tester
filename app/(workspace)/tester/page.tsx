@@ -1,4 +1,9 @@
-import LLMTesterForm from "@/components/llm-tester-form";
+import { Metadata } from 'next';
+import LLMTesterForm from "./llm-tester-form";
+
+export const metadata: Metadata = {
+  title: 'Tester',
+};
 
 export default function TesterPage() {
   return (

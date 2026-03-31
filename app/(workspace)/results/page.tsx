@@ -1,6 +1,7 @@
-import ResultsTable from '@/components/results-table';
+import { Metadata } from 'next';
+import ResultsTable from './results-table';
 
-export const metadata = {
+export const metadata: Metadata = {
   title: 'Test Results',
 };
 

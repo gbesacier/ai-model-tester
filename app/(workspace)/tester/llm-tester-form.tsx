@@ -4,8 +4,8 @@ import { useState, useEffect, useMemo } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { Listbox, ListboxButton, ListboxOptions, ListboxOption } from '@headlessui/react';
 import { ChevronDown, Trash2, Plus, ArrowDownAz, ArrowDown01, Calendar } from 'lucide-react';
-import { fetchAvailableModels, type ModelInfo } from '@/app/actions/models';
-import { callModel, updateModelCallRating } from '@/app/actions/call';
+import { fetchAvailableModels, type ModelInfo } from './models';
+import { callModel, updateModelCallRating } from './call';
 import { getAvailablePromptsForResults } from '@/app/actions/results';
 import { styles } from '@/components/styles';
 
