@@ -14,6 +14,12 @@ export interface PromptEntry {
   messages?: RequestMessage[];
 }
 
+export interface StoredPrompt {
+  systemPrompt: string;
+  inputPrompt: string | null;
+  messages: RequestMessage[] | null;
+}
+
 /**
  * Generate a hash for a prompt combination to ensure uniqueness
  * Hash includes system prompt + either input prompt OR messages (not both)
@@ -76,6 +82,28 @@ export async function saveOrGetPrompt(entry: PromptEntry): Promise<{
     id: result[0].id,
     promptHash,
     isNew: true,
+  };
+}
+
+/**
+ * Get a prompt entry by hash
+ */
+export async function getPromptByHash(hash: string|null) {
+  if(hash === null) return null;
+  
+  const result = await db
+    .select()
+    .from(promptLibrary)
+    .where(eq(promptLibrary.promptHash, hash))
+    .limit(1);
+
+  if (result.length === 0) {
+    return null;
+  }
+
+  return {
+    ...result[0],
+    messages: result[0].messages ? JSON.parse(result[0].messages as string) : null,
   };
 }
 

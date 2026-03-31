@@ -8,6 +8,14 @@ import { saveOrGetPrompt, type RequestMessage, generatePromptHash } from '@/lib/
 import { db, modelCalls } from '@/lib/db';
 import { eq } from 'drizzle-orm';
 
+export interface StoredCall {
+  id: number;
+  modelId: string;
+  promptHash: string;
+  result: string;
+  rating: number | null;
+}
+
 
 export interface ModelCallRequest {
   modelId: string;
@@ -143,6 +151,27 @@ export async function callModel(request: ModelCallRequest): Promise<{ text: stri
     console.error('Failed to call model:', error);
     throw new Error(`Failed to call model: ${error instanceof Error ? error.message : 'Unknown error'}`);
   }
+}
+
+export async function getCallById(id: number): Promise<StoredCall | null> {
+  const session = await getServerSession(authOptions);
+  if (!session) {
+    throw new Error('Unauthorized: You must be logged in to access this resource');
+  }
+
+  const result = await db
+    .select({
+      id: modelCalls.id,
+      modelId: modelCalls.modelId,
+      promptHash: modelCalls.promptHash,
+      result: modelCalls.result,
+      rating: modelCalls.rating,
+    })
+    .from(modelCalls)
+    .where(eq(modelCalls.id, id))
+    .limit(1);
+
+  return result[0] ?? null;
 }
 
 export async function updateModelCallRating(callId: number, rating: number): Promise<void> {

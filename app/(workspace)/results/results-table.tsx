@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react';
 import { ArrowDownAz, ArrowDown01, ChevronDown, ChevronRight, Edit2 } from 'lucide-react';
 import Link from 'next/link';
-import { getModelCalls, getAvailableModelsForResults, getAvailablePromptsForResults, type ModelCallResult, type SortBy, type SortOrder } from '@/app/actions/results';
+import { getModelCalls, getAvailableModelsForResults, getAvailablePromptsForResults, type ModelCallResult, type SortBy, type SortOrder } from './actions';
 import { styles } from '@/components/styles';
 
 export default function ResultsTable() {
@@ -297,7 +297,7 @@ export default function ResultsTable() {
                     </td>
                     <td className="px-4 py-3 text-center">
                       <Link
-                        href={`/workspace/tester?model=${call.modelId}&prompt=${call.promptHash}&result=${encodeURIComponent(call.result)}&rating=${call.rating ?? 50}&callId=${call.id}`}
+                        href={`/workspace/tester?callId=${call.id}`}
                         className="inline-flex items-center gap-1 rounded-md bg-blue-100 text-blue-700 px-3 py-2 text-xs font-medium hover:bg-blue-200"
                       >
                         <Edit2 size={14} />

@@ -3,7 +3,7 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { unauthorized } from "next/navigation";
 import WorkspaceTabs from "./workspace-tabs";
-import { getGatewayCredits } from "@/app/gateway";
+import { getGatewayCredits } from "./gateway";
 
 async function CreditsDisplay() {
   const result = await getGatewayCredits();
