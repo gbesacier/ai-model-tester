@@ -71,4 +71,20 @@ export const styles = {
 
   // Loading/Empty States
   loadingContainer: 'flex items-center justify-center p-8',
+
+  // Card UI (used in prompt library & results)
+  card: {
+    container: 'rounded-lg border border-gray-200 bg-white overflow-hidden hover:shadow-sm transition-shadow',
+    header: 'flex items-center gap-2 px-4 py-2 bg-gray-50 border-b border-gray-200 flex-wrap',
+    hashBadge: 'text-xs font-mono text-gray-500 bg-gray-100 px-1.5 py-0.5 rounded',
+    roleBadge: 'text-xs font-mono bg-gray-200 px-1.5 py-0.5 rounded text-gray-600 shrink-0',
+    toggleButton: 'inline-flex items-center gap-1 rounded px-2 py-1 text-xs font-medium text-gray-600 border border-gray-300 bg-white hover:bg-gray-50',
+  },
+
+  // Prompt display blocks (used in CollapsedText / CollapsedMessages)
+  promptDisplay: {
+    label: 'text-xs font-medium text-gray-500 uppercase tracking-wide block mb-1',
+    preBlock: 'text-xs text-gray-700 whitespace-pre-wrap wrap-break-word font-mono bg-gray-50 rounded p-2 border border-gray-200',
+    messageItem: 'bg-gray-50 rounded border border-gray-200 p-2 flex items-baseline gap-2',
+  },
 };

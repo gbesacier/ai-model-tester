@@ -1,53 +1,12 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { ArrowDownAz, ArrowDown01, ChevronDown, ChevronRight, ChevronUp, Edit2 } from 'lucide-react';
+import { ArrowDownAz, ArrowDown01, ChevronDown, ChevronRight, Edit2 } from 'lucide-react';
+import { CollapsedText, CollapsedMessages, ExpandToggleButton } from '@/components/prompt-display';
 import Link from 'next/link';
 import { getModelCalls, getAvailableModelsForResults, getAvailablePromptsForResults, type ModelCallResult, type SortBy, type SortOrder } from './actions';
 import { styles } from '@/components/styles';
 
-function ClampedText({ text, label, expanded }: { text: string; label: string; expanded: boolean }) {
-  return (
-    <div>
-      <span className="text-xs font-medium text-gray-500 uppercase tracking-wide block mb-1">{label}</span>
-      <pre
-        className="text-xs text-gray-700 whitespace-pre-wrap wrap-break-word font-mono bg-gray-50 rounded p-2 border border-gray-200"
-        style={expanded ? undefined : { display: '-webkit-box', WebkitLineClamp: 4, WebkitBoxOrient: 'vertical', overflow: 'hidden' } as React.CSSProperties}
-      >
-        {text}
-      </pre>
-    </div>
-  );
-}
-
-function ClampedMessages({ messages, expanded }: { messages: { role: string; text: string }[]; expanded: boolean }) {
-  const preview = expanded ? messages : messages.slice(0, 2);
-  return (
-    <div>
-      <span className="text-xs font-medium text-gray-500 uppercase tracking-wide block mb-1">
-        Messages ({messages.length})
-      </span>
-      <div className="space-y-1">
-        {preview.map((msg, idx) => (
-          <div key={idx} className="bg-gray-50 rounded border border-gray-200 p-2 flex items-baseline gap-2">
-            <span className="text-xs font-mono bg-gray-200 px-1.5 py-0.5 rounded text-gray-600 shrink-0">
-              {msg.role}
-            </span>
-            <span
-              className="text-xs text-gray-700 font-mono min-w-0 break-words"
-              style={expanded ? undefined : { display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden' } as React.CSSProperties}
-            >
-              {msg.text}
-            </span>
-          </div>
-        ))}
-        {!expanded && messages.length > 2 && (
-          <span className="text-xs text-gray-400">+{messages.length - 2} more</span>
-        )}
-      </div>
-    </div>
-  );
-}
 
 function ResultCard({ call, formatDate }: { call: ModelCallResult; formatDate: (d: Date | null) => string }) {
   const [expanded, setExpanded] = useState(false);
@@ -55,13 +14,13 @@ function ResultCard({ call, formatDate }: { call: ModelCallResult; formatDate: (
   const hasMiddle = !!(call.inputPrompt || (call.messages && call.messages.length > 0));
 
   return (
-    <div className="rounded-lg border border-gray-200 bg-white overflow-hidden hover:shadow-sm transition-shadow">
+    <div className={styles.card.container}>
       {/* Header */}
-      <div className="flex items-center gap-2 px-4 py-2 bg-gray-50 border-b border-gray-200 flex-wrap">
+      <div className={styles.card.header}>
         <span className="text-xs text-gray-400 shrink-0">{formatDate(call.created)}</span>
         <span className="text-xs bg-gray-200 px-1.5 py-0.5 rounded text-gray-600 font-mono">{call.userEmail}</span>
         <span className="text-xs font-medium text-gray-700">{call.modelName}</span>
-        <code className="text-xs font-mono text-gray-500 bg-gray-100 px-1.5 py-0.5 rounded">
+        <code className={styles.card.hashBadge}>
           {call.promptHash.slice(0, 8)}
         </code>
         {params.map(([k, v]) => (
@@ -77,12 +36,7 @@ function ResultCard({ call, formatDate }: { call: ModelCallResult; formatDate: (
           ) : (
             <span className="text-xs text-gray-400">—</span>
           )}
-          <button
-            onClick={() => setExpanded((e) => !e)}
-            className="inline-flex items-center gap-1 rounded px-2 py-1 text-xs font-medium text-gray-600 border border-gray-300 bg-white hover:bg-gray-50"
-          >
-            {expanded ? <><ChevronUp size={12} />Less</> : <><ChevronDown size={12} />More</>}
-          </button>
+          <ExpandToggleButton expanded={expanded} onToggle={() => setExpanded((e) => !e)} />
           <Link
             href={`/tester?callId=${call.id}`}
             className="inline-flex items-center gap-1 rounded px-2 py-1 text-xs font-medium text-white bg-blue-600 hover:bg-blue-700"
@@ -96,19 +50,19 @@ function ResultCard({ call, formatDate }: { call: ModelCallResult; formatDate: (
       {/* Body — always 3 cols when middle exists, else 2 */}
       <div className={`grid divide-x divide-gray-200 ${hasMiddle ? 'grid-cols-3' : 'grid-cols-2'}`}>
         <div className="p-3">
-          <ClampedText text={call.systemPrompt} label="System" expanded={expanded} />
+          <CollapsedText text={call.systemPrompt} label="System" expanded={expanded} />
         </div>
         {hasMiddle && (
           <div className="p-3">
             {call.messages && call.messages.length > 0 ? (
-              <ClampedMessages messages={call.messages} expanded={expanded} />
+              <CollapsedMessages messages={call.messages} expanded={expanded} />
             ) : (
-              <ClampedText text={call.inputPrompt!} label="Input" expanded={expanded} />
+              <CollapsedText text={call.inputPrompt!} label="Input" expanded={expanded} />
             )}
           </div>
         )}
         <div className="p-3">
-          <ClampedText text={call.result} label="Result" expanded={expanded} />
+          <CollapsedText text={call.result} label="Result" expanded={expanded} />
         </div>
       </div>
     </div>

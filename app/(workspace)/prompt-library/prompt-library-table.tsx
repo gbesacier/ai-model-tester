@@ -2,7 +2,8 @@
 
 import { useEffect, useState } from 'react';
 import { styles } from '@/components/styles';
-import { Copy, Check, Zap, ChevronDown, ChevronUp } from 'lucide-react';
+import { Copy, Check, Zap } from 'lucide-react';
+import { CollapsedText, CollapsedMessages, ExpandToggleButton } from '@/components/prompt-display';
 import Link from 'next/link';
 import { getPrompts } from './actions';
 
@@ -16,45 +17,6 @@ interface Prompt {
   created: Date | string;
 }
 
-function CollapsedText({ text, label, expanded }: { text: string; label: string; expanded: boolean }) {
-  return (
-    <div>
-      <span className="text-xs font-medium text-gray-500 uppercase tracking-wide block mb-1">{label}</span>
-      <pre
-        className="text-xs text-gray-700 whitespace-pre-wrap wrap-break-word font-mono bg-gray-50 rounded p-2 border border-gray-200 overflow-hidden"
-        style={expanded ? undefined : { display: '-webkit-box', WebkitLineClamp: 4, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}
-      >
-        {text}
-      </pre>
-    </div>
-  );
-}
-
-function CollapsedMessages({ messages, expanded }: { messages: any[]; expanded: boolean }) {
-  const preview = expanded ? messages : messages.slice(0, 2);
-  return (
-    <div>
-      <span className="text-xs font-medium text-gray-500 uppercase tracking-wide block mb-1">
-        Messages ({messages.length})
-      </span>
-      <div className="space-y-1">
-        {preview.map((msg, idx) => (
-          <div key={idx} className="bg-gray-50 rounded border border-gray-200 p-2 flex items-baseline gap-2">
-            <span className="text-xs font-mono bg-gray-200 px-1.5 py-0.5 rounded text-gray-600 shrink-0">
-              {msg.role}
-            </span>
-            <span
-              className="text-xs text-gray-700 font-mono min-w-0"
-              style={expanded ? undefined : { display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden' } as React.CSSProperties}
-            >
-              {msg.text}
-            </span>
-          </div>
-        ))}
-      </div>
-    </div>
-  );
-}
 
 function PromptCard({
   prompt,
@@ -69,10 +31,10 @@ function PromptCard({
 }) {
   const [expanded, setExpanded] = useState(false);
   return (
-    <div className="rounded-lg border border-gray-200 bg-white overflow-hidden hover:shadow-sm transition-shadow">
+    <div className={styles.card.container}>
       {/* Row header */}
-      <div className="flex items-center gap-3 px-4 py-2 bg-gray-50 border-b border-gray-200">
-        <code className="text-xs font-mono text-gray-500 bg-gray-100 px-1.5 py-0.5 rounded">
+      <div className={styles.card.header}>
+        <code className={styles.card.hashBadge}>
           {prompt.promptHash.slice(0, 8)}
         </code>
         <span className="text-xs text-gray-400">{formatDate(prompt.created)}</span>
@@ -80,12 +42,7 @@ function PromptCard({
           ×{prompt.usageCount}
         </span>
         <div className="ml-auto flex items-center gap-1.5">
-          <button
-            onClick={() => setExpanded((e) => !e)}
-            className="inline-flex items-center gap-1 rounded px-2 py-1 text-xs font-medium text-gray-600 border border-gray-300 bg-white hover:bg-gray-50"
-          >
-            {expanded ? <><ChevronUp size={12} />Less</> : <><ChevronDown size={12} />More</>}
-          </button>
+          <ExpandToggleButton expanded={expanded} onToggle={() => setExpanded((e) => !e)} />
           <button
             onClick={() => onCopy(prompt.promptHash, prompt.id)}
             className="inline-flex items-center gap-1 rounded px-2 py-1 text-xs font-medium text-gray-600 border border-gray-300 bg-white hover:bg-gray-50"
