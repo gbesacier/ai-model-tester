@@ -1,7 +1,6 @@
 "use client";
 
 import { useState } from "react";
-import { useRouter } from "next/navigation";
 import { signIn } from "next-auth/react";
 import { styles } from "@/components/styles";
 
@@ -10,7 +9,6 @@ export default function Unauthorized() {
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
-  const router = useRouter();
 
   const handleSubmit = async (event: React.SyntheticEvent<HTMLFormElement>) => {
     event.preventDefault();
@@ -27,10 +25,9 @@ export default function Unauthorized() {
 
     if (res?.error) {
       setError("Invalid email or password");
-      return;
+    } else {
+      window.location.reload();
     }
-
-    router.push("/tester");
   };
 
   return (

@@ -1,6 +1,7 @@
 'use client';
 
 import { usePathname, useRouter } from 'next/navigation';
+import { signOut } from 'next-auth/react';
 import { TabGroup, TabList, Tab, TabPanels, TabPanel } from '@headlessui/react';
 
 interface WorkspaceTabsProps {
@@ -43,8 +44,16 @@ export default function WorkspaceTabs({ children, creditsSlot }: WorkspaceTabsPr
             </TabList>
 
             {/* Credits Display */}
-            <div className="flex items-center pb-2">
+            <div className="flex items-center gap-3 pb-2">
               {creditsSlot}
+              {process.env.NODE_ENV === 'development' && (
+                <button
+                  onClick={() => signOut()}
+                  className="text-xs text-gray-400 hover:text-red-500 border border-gray-300 rounded px-2 py-1"
+                >
+                  [dev] sign out
+                </button>
+              )}
             </div>
           </div>
 

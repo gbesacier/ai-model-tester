@@ -7,7 +7,7 @@ import { authOptions } from '@/lib/auth';
 export async function getGatewayCredits() {
   const session = await getServerSession(authOptions);
   if (!session) {
-    throw new Error('Unauthorized: You must be logged in to access this resource');
+    return { success: false, balance: undefined, totalUsed: undefined };
   }
 
   try {
