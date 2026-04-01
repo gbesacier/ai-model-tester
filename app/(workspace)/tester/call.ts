@@ -79,7 +79,7 @@ export async function callModel(request: ModelCallRequest): Promise<{ text: stri
 
     // Remove undefined values from common params
     const cleanCommonParams = Object.fromEntries(
-      Object.entries(commonParams).filter(([, value]) => value !== undefined)
+      Object.entries(commonParams).filter(([, value]) => value !== undefined && value !== null && value !== '' && !(Array.isArray(value) && value.length === 0))
     ) as Parameters<typeof generateText>[0];
 
     if (conversationMessages) {
