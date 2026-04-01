@@ -101,10 +101,7 @@ export async function getPromptByHash(hash: string|null) {
     return null;
   }
 
-  return {
-    ...result[0],
-    messages: result[0].messages ? JSON.parse(result[0].messages as string) : null,
-  };
+  return result[0];
 }
 
 /**
@@ -121,10 +118,7 @@ export async function getPromptById(id: number) {
     return null;
   }
 
-  return {
-    ...result[0],
-    messages: result[0].messages ? JSON.parse(result[0].messages as string) : null,
-  };
+  return result[0];
 }
 
 /**
@@ -138,10 +132,7 @@ export async function getAllPrompts(limit: number = 100, offset: number = 0) {
     .limit(limit)
     .offset(offset);
 
-  return results.map((r) => ({
-    ...r,
-    messages: r.messages ? JSON.parse(r.messages as string) : null,
-  }));
+  return results;
 }
 
 /**
