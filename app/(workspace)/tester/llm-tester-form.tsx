@@ -1,8 +1,9 @@
 'use client';
 
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo, useRef } from 'react';
 import { Listbox, ListboxButton, ListboxOptions, ListboxOption } from '@headlessui/react';
 import { ChevronDown, Trash2, Plus, ArrowDownAz, ArrowDown01, Calendar } from 'lucide-react';
+import { useRouter, usePathname } from 'next/navigation';
 import { fetchAvailableModels, type ModelInfo } from './models';
 import { callModel, updateModelCallRating, type StoredCall } from './call';
 import { styles } from '@/components/styles';
@@ -26,6 +27,16 @@ export default function LLMTesterForm({ initialPrompt, initialCall, initialModel
   const [rating, setRating] = useState<number>(initialCall?.rating ?? 50);
   const [ratingInteracted, setRatingInteracted] = useState(initialCall?.rating != null);
   const [submitError, setSubmitError] = useState<string | null>(null);
+
+  // Dirty tracking for pre-loaded data
+  const hasPreloadedData = !!(initialPrompt || initialCall || initialModelId);
+  const [dirtyFields, setDirtyFields] = useState(new Set<string>());
+  const originalMessagesRef = useRef<Message[]>(
+    (initialPrompt?.messages ?? []).map((m, i) => ({ ...m, id: `orig-${i}` }))
+  );
+  const urlCleared = useRef(false);
+  const router = useRouter();
+  const pathname = usePathname();
 
   // Form state
   const [selectedModelId, setSelectedModelId] = useState(initialModelId);
@@ -86,6 +97,25 @@ export default function LLMTesterForm({ initialPrompt, initialCall, initialModel
     }
   }, [models]);
 
+  const originalSystemPrompt = initialPrompt?.systemPrompt ?? '';
+  const originalInputPrompt = initialPrompt?.inputPrompt ?? '';
+
+  const onFieldModified = (field: string) => {
+    if (!hasPreloadedData) return;
+    setDirtyFields(prev => {
+      if (prev.has(field)) return prev;
+      return new Set([...prev, field]);
+    });
+    if (!urlCleared.current) {
+      urlCleared.current = true;
+      router.replace(pathname, { scroll: false });
+      setCallId(null);
+      setResponse(null);
+      setRating(50);
+      setRatingInteracted(false);
+    }
+  };
+
   const currentModel = models.find((m) => m.id === selectedModelId);
   const currentProvider = currentModel?.providers.find((p) => p.provider === selectedProvider);
 
@@ -132,14 +162,17 @@ export default function LLMTesterForm({ initialPrompt, initialCall, initialModel
       text: '',
     };
     setMessages([...messages, newMessage]);
+    onFieldModified('messages');
   };
 
   const updateMessage = (id: string, updates: Partial<Message>) => {
     setMessages(messages.map((msg) => (msg.id === id ? { ...msg, ...updates } : msg)));
+    onFieldModified('messages');
   };
 
   const deleteMessage = (id: string) => {
     setMessages(messages.filter((msg) => msg.id !== id));
+    onFieldModified('messages');
   };
 
   // Parameter management
@@ -220,7 +253,23 @@ export default function LLMTesterForm({ initialPrompt, initialCall, initialModel
 
       {/* Model Selection Section */}
       <div className={styles.container.sectionBase}>
-        <label className={styles.label.base}>AI Model</label>
+        <div className="flex items-center gap-2">
+          <label className={styles.label.base}>AI Model</label>
+          {dirtyFields.has('model') && (
+            <button
+              type="button"
+              onClick={() => {
+                setSelectedModelId(initialModelId);
+                const origModel = models.find((m) => m.id === initialModelId);
+                setSelectedProvider(origModel?.providers[0]?.provider ?? '');
+                setDirtyFields(prev => { const s = new Set(prev); s.delete('model'); return s; });
+              }}
+              className="text-xs text-gray-400 hover:text-gray-600 px-1.5 py-0.5 rounded border border-gray-200 hover:border-gray-400 transition-colors"
+            >
+              ↩ undo
+            </button>
+          )}
+        </div>
         <Listbox value={selectedModelId} onChange={(modelId) => {
           setSelectedModelId(modelId);
           const m = models.find((m) => m.id === modelId);
@@ -228,6 +277,9 @@ export default function LLMTesterForm({ initialPrompt, initialCall, initialModel
             setSelectedProvider(m?.providers[0].provider);
           } else {
             setSelectedProvider('');
+          }
+          if (modelId !== initialModelId) {
+            onFieldModified('model');
           }
         }}>
           <ListboxButton className={styles.button.dropdown}>
@@ -310,7 +362,10 @@ export default function LLMTesterForm({ initialPrompt, initialCall, initialModel
 
       {/* Provider Selection Section */}
       <div className={styles.container.sectionBase}>
-        <label className={styles.label.base}>Provider</label>
+        <div className="flex items-center gap-2">
+          <label className={styles.label.base}>Provider</label>
+
+        </div>
         <Listbox value={selectedProvider} onChange={(provider) => {
           setSelectedProvider(provider);
         }} disabled={!currentModel}>
@@ -354,13 +409,32 @@ export default function LLMTesterForm({ initialPrompt, initialCall, initialModel
 
       {/* System Prompt Section */}
       <div className={styles.container.sectionBase}>
-        <label htmlFor="system-prompt" className={styles.label.base}>
-          System Prompt
-        </label>
+        <div className="flex items-center gap-2">
+          <label htmlFor="system-prompt" className={styles.label.base}>
+            System Prompt
+          </label>
+          {dirtyFields.has('systemPrompt') && (
+            <button
+              type="button"
+              onClick={() => {
+                setSystemPrompt(originalSystemPrompt);
+                setDirtyFields(prev => { const s = new Set(prev); s.delete('systemPrompt'); return s; });
+              }}
+              className="text-xs text-gray-400 hover:text-gray-600 px-1.5 py-0.5 rounded border border-gray-200 hover:border-gray-400 transition-colors"
+            >
+              ↩ undo
+            </button>
+          )}
+        </div>
         <textarea
           id="system-prompt"
           value={systemPrompt}
-          onChange={(e) => setSystemPrompt(e.target.value)}
+          onChange={(e) => {
+            setSystemPrompt(e.target.value);
+            if (e.target.value !== originalSystemPrompt) {
+              onFieldModified('systemPrompt');
+            }
+          }}
           placeholder="Define the behavior and context for the AI..."
           className={`${styles.input.base} min-h-24 font-mono text-sm`}
         />
@@ -390,13 +464,32 @@ export default function LLMTesterForm({ initialPrompt, initialCall, initialModel
       {/* Input Prompt Section */}
       {mode === 'prompt' && (
         <div className={styles.container.sectionBase}>
-          <label htmlFor="input-prompt" className={styles.label.base}>
-            Input Prompt
-          </label>
+          <div className="flex items-center gap-2">
+            <label htmlFor="input-prompt" className={styles.label.base}>
+              Input Prompt
+            </label>
+            {dirtyFields.has('inputPrompt') && (
+              <button
+                type="button"
+                onClick={() => {
+                  setInputPrompt(originalInputPrompt);
+                  setDirtyFields(prev => { const s = new Set(prev); s.delete('inputPrompt'); return s; });
+                }}
+                className="text-xs text-gray-400 hover:text-gray-600 px-1.5 py-0.5 rounded border border-gray-200 hover:border-gray-400 transition-colors"
+              >
+                ↩ undo
+              </button>
+            )}
+          </div>
           <textarea
             id="input-prompt"
             value={inputPrompt}
-            onChange={(e) => setInputPrompt(e.target.value)}
+            onChange={(e) => {
+              setInputPrompt(e.target.value);
+              if (e.target.value !== originalInputPrompt) {
+                onFieldModified('inputPrompt');
+              }
+            }}
             placeholder="Enter your question or request..."
             className={`${styles.input.base} min-h-24 font-mono text-sm`}
           />
@@ -406,7 +499,21 @@ export default function LLMTesterForm({ initialPrompt, initialCall, initialModel
       {/* Conversation History Section */}
       {mode === 'history' && (
         <div className={styles.container.section}>
-        <label className={styles.label.base}>Conversation History</label>
+        <div className="flex items-center gap-2">
+          <label className={styles.label.base}>Conversation History</label>
+          {dirtyFields.has('messages') && (
+            <button
+              type="button"
+              onClick={() => {
+                setMessages([...originalMessagesRef.current]);
+                setDirtyFields(prev => { const s = new Set(prev); s.delete('messages'); return s; });
+              }}
+              className="text-xs text-gray-400 hover:text-gray-600 px-1.5 py-0.5 rounded border border-gray-200 hover:border-gray-400 transition-colors"
+            >
+              ↩ undo
+            </button>
+          )}
+        </div>
 
         <div className={styles.container.section}>
           {messages.length === 0 ? (
