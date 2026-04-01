@@ -45,7 +45,7 @@ function PromptCard({
           <ExpandToggleButton expanded={expanded} onToggle={() => setExpanded((e) => !e)} />
           <button
             onClick={() => onCopy(prompt.promptHash, prompt.id)}
-            className="inline-flex items-center gap-1 rounded px-2 py-1 text-xs font-medium text-gray-600 border border-gray-300 bg-white hover:bg-gray-50"
+            className={styles.card.toggleButton}
           >
             {copiedId === prompt.id ? (
               <><Check size={12} className="text-green-600" />Copied</>
@@ -55,7 +55,7 @@ function PromptCard({
           </button>
           <Link
             href={`/tester?prompt=${prompt.promptHash}`}
-            className="inline-flex items-center gap-1 rounded px-2 py-1 text-xs font-medium text-white bg-blue-600 hover:bg-blue-700"
+            className={styles.card.actionPrimary}
           >
             <Zap size={12} />
             Test

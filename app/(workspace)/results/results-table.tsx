@@ -89,7 +89,7 @@ function ResultCard({ call, formatDate, filterModelIds, setFilterModelIds, filte
           <ExpandToggleButton expanded={expanded} onToggle={() => setExpanded((e) => !e)} />
           <Link
             href={`/tester?callId=${call.id}`}
-            className="inline-flex items-center gap-1 rounded px-2 py-1 text-xs font-medium text-white bg-blue-600 hover:bg-blue-700"
+            className={styles.card.actionPrimary}
           >
             <Edit2 size={12} />
             Edit
@@ -234,21 +234,21 @@ export default function ResultsTable() {
               Models {filterModelIds.length > 0 && <span className="text-blue-600 font-semibold">({filterModelIds.length})</span>}
             </label>
             <Listbox multiple value={filterModelIds} onChange={setFilterModelIds}>
-              <ListboxButton className={`${styles.input.base} w-full text-left flex items-center justify-between`}>
+              <ListboxButton className={`${styles.input.base} ${styles.listbox.button}`}>
                 <span>{filterModelIds.length > 0 ? `${filterModelIds.length} selected` : 'All Models'}</span>
                 <ChevronDown size={16} />
               </ListboxButton>
-              <ListboxOptions anchor="bottom" className=" w-(--button-width) z-50 mt-1 bg-white border border-gray-300 rounded shadow-lg max-h-48 overflow-y-auto">
-                <div className="p-2 border-b border-gray-200 flex gap-2 sticky top-0 bg-white">
+              <ListboxOptions anchor="bottom" className={styles.listbox.options}>
+                <div className={styles.listbox.controlsHeader}>
                   <button
                     onClick={(e) => { e.preventDefault(); setFilterModelIds(availableModels.map((m) => m.id)); }}
-                    className="text-xs px-2 py-1 bg-blue-100 text-blue-700 rounded hover:bg-blue-200"
+                    className={styles.listbox.selectAll}
                   >
                     All
                   </button>
                   <button
                     onClick={(e) => { e.preventDefault(); setFilterModelIds([]); }}
-                    className="text-xs px-2 py-1 bg-gray-100 text-gray-700 rounded hover:bg-gray-200"
+                    className={styles.listbox.selectNone}
                   >
                     None
                   </button>
@@ -257,10 +257,10 @@ export default function ResultsTable() {
                   <ListboxOption
                     key={model.id}
                     value={model.id}
-                    className="group flex items-center gap-2 px-4 py-2 hover:bg-gray-50 cursor-pointer"
+                    className={styles.listbox.option}
                   >
-                    <span className="w-4 h-4 border border-gray-300 rounded flex items-center justify-center group-data-selected:bg-blue-600 group-data-selected:border-blue-600 shrink-0">
-                      <span className="hidden group-data-selected:block text-white text-xs leading-none">✓</span>
+                    <span className={styles.listbox.optionCheckbox}>
+                      <span className={styles.listbox.optionCheckmark}>✓</span>
                     </span>
                     <span className="text-sm">{model.name}</span>
                   </ListboxOption>
@@ -275,21 +275,21 @@ export default function ResultsTable() {
               Prompts {filterPromptHashes.length > 0 && <span className="text-blue-600 font-semibold">({filterPromptHashes.length})</span>}
             </label>
             <Listbox multiple value={filterPromptHashes} onChange={setFilterPromptHashes}>
-              <ListboxButton className={`${styles.input.base} w-full text-left flex items-center justify-between`}>
+              <ListboxButton className={`${styles.input.base} ${styles.listbox.button}`}>
                 <span>{filterPromptHashes.length > 0 ? `${filterPromptHashes.length} selected` : 'All Prompts'}</span>
                 <ChevronDown size={16} />
               </ListboxButton>
-              <ListboxOptions anchor="bottom" className=" w-(--button-width) z-50 mt-1 bg-white border border-gray-300 rounded shadow-lg max-h-48 overflow-y-auto">
-                <div className="p-2 border-b border-gray-200 flex gap-2 sticky top-0 bg-white">
+              <ListboxOptions anchor="bottom" className={styles.listbox.options}>
+                <div className={styles.listbox.controlsHeader}>
                   <button
                     onClick={(e) => { e.preventDefault(); setFilterPromptHashes(availablePrompts.map((p) => p.hash)); }}
-                    className="text-xs px-2 py-1 bg-blue-100 text-blue-700 rounded hover:bg-blue-200"
+                    className={styles.listbox.selectAll}
                   >
                     All
                   </button>
                   <button
                     onClick={(e) => { e.preventDefault(); setFilterPromptHashes([]); }}
-                    className="text-xs px-2 py-1 bg-gray-100 text-gray-700 rounded hover:bg-gray-200"
+                    className={styles.listbox.selectNone}
                   >
                     None
                   </button>
@@ -298,10 +298,10 @@ export default function ResultsTable() {
                   <ListboxOption
                     key={prompt.hash}
                     value={prompt.hash}
-                    className="group flex items-center gap-2 px-4 py-2 hover:bg-gray-50 cursor-pointer"
+                    className={styles.listbox.option}
                   >
-                    <span className="w-4 h-4 border border-gray-300 rounded flex items-center justify-center group-data-selected:bg-blue-600 group-data-selected:border-blue-600 shrink-0">
-                      <span className="hidden group-data-selected:block text-white text-xs leading-none">✓</span>
+                    <span className={styles.listbox.optionCheckbox}>
+                      <span className={styles.listbox.optionCheckmark}>✓</span>
                     </span>
                     <div className="flex flex-col min-w-0">
                       <span className="text-xs font-mono text-gray-400">{prompt.hash.slice(0, 8)}</span>
