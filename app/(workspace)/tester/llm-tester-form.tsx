@@ -3,11 +3,12 @@
 import { useState, useEffect, useMemo, useRef } from 'react';
 import { Listbox, ListboxButton, ListboxOptions, ListboxOption } from '@headlessui/react';
 import { ChevronDown, Trash2, Plus, ArrowDownAz, ArrowDown01, Calendar } from 'lucide-react';
-import { useRouter, usePathname } from 'next/navigation';
+import { useRouter, usePathname, useSearchParams } from 'next/navigation';
 import { fetchAvailableModels, type ModelInfo } from './models';
 import { callModel, updateModelCallRating, type StoredCall } from './call';
 import { styles } from '@/components/styles';
-import { type RequestMessage, type StoredPrompt } from '@/lib/prompt-library';
+import { type StoredPrompt } from '@/lib/prompt-library';
+import { RequestMessage } from '@/lib/db';
 
 interface Message extends RequestMessage {
   id: string;
@@ -29,14 +30,22 @@ export default function LLMTesterForm({ initialPrompt, initialCall, initialModel
   const [submitError, setSubmitError] = useState<string | null>(null);
 
   // Dirty tracking for pre-loaded data
-  const hasPreloadedData = !!(initialPrompt || initialCall || initialModelId);
+  // Captured in a ref so it stays true even after router.replace() causes the parent
+  // to re-render with null props (stripped URL params).
+  const hasPreloadedDataRef = useRef(!!(initialPrompt || initialCall || initialModelId));
   const [dirtyFields, setDirtyFields] = useState(new Set<string>());
+  const originalSystemPromptRef = useRef(initialPrompt?.systemPrompt ?? '');
+  const originalInputPromptRef = useRef(initialPrompt?.inputPrompt ?? '');
+  const originalModelIdRef = useRef(initialModelId);
   const originalMessagesRef = useRef<Message[]>(
     (initialPrompt?.messages ?? []).map((m, i) => ({ ...m, id: `orig-${i}` }))
   );
+  const originalCallRef = useRef(initialCall);
   const urlCleared = useRef(false);
   const router = useRouter();
   const pathname = usePathname();
+  const searchParams = useSearchParams();
+  const originalSearchRef = useRef(searchParams.toString());
 
   // Form state
   const [selectedModelId, setSelectedModelId] = useState(initialModelId);
@@ -63,12 +72,12 @@ export default function LLMTesterForm({ initialPrompt, initialCall, initialModel
     presencePenalty: number | undefined;
     frequencyPenalty: number | undefined;
   }>({
-    maxOutputTokens: undefined,
-    temperature: undefined,
-    topP: undefined,
-    topK: undefined,
-    presencePenalty: undefined,
-    frequencyPenalty: undefined,
+    maxOutputTokens: initialCall?.parameters?.maxOutputTokens,
+    temperature: initialCall?.parameters?.temperature,
+    topP: initialCall?.parameters?.topP,
+    topK: initialCall?.parameters?.topK,
+    presencePenalty: initialCall?.parameters?.presencePenalty,
+    frequencyPenalty: initialCall?.parameters?.frequencyPenalty,
   });
 
   useEffect(() => {
@@ -97,11 +106,8 @@ export default function LLMTesterForm({ initialPrompt, initialCall, initialModel
     }
   }, [models]);
 
-  const originalSystemPrompt = initialPrompt?.systemPrompt ?? '';
-  const originalInputPrompt = initialPrompt?.inputPrompt ?? '';
-
   const onFieldModified = (field: string) => {
-    if (!hasPreloadedData) return;
+    if (!hasPreloadedDataRef.current) return;
     setDirtyFields(prev => {
       if (prev.has(field)) return prev;
       return new Set([...prev, field]);
@@ -113,6 +119,30 @@ export default function LLMTesterForm({ initialPrompt, initialCall, initialModel
       setResponse(null);
       setRating(50);
       setRatingInteracted(false);
+    }
+  };
+
+  // Called by each undo button: if this was the last dirty field, restore the original URL.
+  const tryRestoreUrl = (fieldBeingUndone: string) => {
+    if (dirtyFields.size === 1 && dirtyFields.has(fieldBeingUndone) && urlCleared.current) {
+      urlCleared.current = false;
+      const q = originalSearchRef.current;
+      router.replace(pathname + (q ? '?' + q : ''), { scroll: false });
+      if (originalCallRef.current) {
+        const c = originalCallRef.current;
+        setCallId(c.id);
+        setResponse(c.result);
+        setRating(c.rating ?? 50);
+        setRatingInteracted(c.rating != null);
+        setParameters({
+          maxOutputTokens: c.parameters?.maxOutputTokens,
+          temperature: c.parameters?.temperature,
+          topP: c.parameters?.topP,
+          topK: c.parameters?.topK,
+          presencePenalty: c.parameters?.presencePenalty,
+          frequencyPenalty: c.parameters?.frequencyPenalty,
+        });
+      }
     }
   };
 
@@ -184,6 +214,12 @@ export default function LLMTesterForm({ initialPrompt, initialCall, initialModel
       ...prev,
       [param]: value,
     }));
+    const originalValue = originalCallRef.current?.parameters?.[param];
+    if (value !== originalValue) {
+      onFieldModified(`param:${param}`);
+    } else {
+      setDirtyFields(prev => { const s = new Set(prev); s.delete(`param:${param}`); return s; });
+    }
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -259,8 +295,9 @@ export default function LLMTesterForm({ initialPrompt, initialCall, initialModel
             <button
               type="button"
               onClick={() => {
-                setSelectedModelId(initialModelId);
-                const origModel = models.find((m) => m.id === initialModelId);
+                tryRestoreUrl('model');
+                setSelectedModelId(originalModelIdRef.current);
+                const origModel = models.find((m) => m.id === originalModelIdRef.current);
                 setSelectedProvider(origModel?.providers[0]?.provider ?? '');
                 setDirtyFields(prev => { const s = new Set(prev); s.delete('model'); return s; });
               }}
@@ -278,7 +315,7 @@ export default function LLMTesterForm({ initialPrompt, initialCall, initialModel
           } else {
             setSelectedProvider('');
           }
-          if (modelId !== initialModelId) {
+          if (modelId !== originalModelIdRef.current) {
             onFieldModified('model');
           }
         }}>
@@ -417,7 +454,8 @@ export default function LLMTesterForm({ initialPrompt, initialCall, initialModel
             <button
               type="button"
               onClick={() => {
-                setSystemPrompt(originalSystemPrompt);
+                tryRestoreUrl('systemPrompt');
+                setSystemPrompt(originalSystemPromptRef.current);
                 setDirtyFields(prev => { const s = new Set(prev); s.delete('systemPrompt'); return s; });
               }}
               className="text-xs text-gray-400 hover:text-gray-600 px-1.5 py-0.5 rounded border border-gray-200 hover:border-gray-400 transition-colors"
@@ -431,7 +469,7 @@ export default function LLMTesterForm({ initialPrompt, initialCall, initialModel
           value={systemPrompt}
           onChange={(e) => {
             setSystemPrompt(e.target.value);
-            if (e.target.value !== originalSystemPrompt) {
+            if (e.target.value !== originalSystemPromptRef.current) {
               onFieldModified('systemPrompt');
             }
           }}
@@ -472,7 +510,8 @@ export default function LLMTesterForm({ initialPrompt, initialCall, initialModel
               <button
                 type="button"
                 onClick={() => {
-                  setInputPrompt(originalInputPrompt);
+                  tryRestoreUrl('inputPrompt');
+                  setInputPrompt(originalInputPromptRef.current);
                   setDirtyFields(prev => { const s = new Set(prev); s.delete('inputPrompt'); return s; });
                 }}
                 className="text-xs text-gray-400 hover:text-gray-600 px-1.5 py-0.5 rounded border border-gray-200 hover:border-gray-400 transition-colors"
@@ -486,7 +525,7 @@ export default function LLMTesterForm({ initialPrompt, initialCall, initialModel
             value={inputPrompt}
             onChange={(e) => {
               setInputPrompt(e.target.value);
-              if (e.target.value !== originalInputPrompt) {
+              if (e.target.value !== originalInputPromptRef.current) {
                 onFieldModified('inputPrompt');
               }
             }}
@@ -505,6 +544,7 @@ export default function LLMTesterForm({ initialPrompt, initialCall, initialModel
             <button
               type="button"
               onClick={() => {
+                tryRestoreUrl('messages');
                 setMessages([...originalMessagesRef.current]);
                 setDirtyFields(prev => { const s = new Set(prev); s.delete('messages'); return s; });
               }}
@@ -602,9 +642,25 @@ export default function LLMTesterForm({ initialPrompt, initialCall, initialModel
 
             return (
               <div key={param.key} className="space-y-2">
-                <label className={styles.label.small}>
-                  {param.label}
-                </label>
+                <div className="flex items-center gap-2">
+                  <label className={styles.label.small}>
+                    {param.label}
+                  </label>
+                  {dirtyFields.has(`param:${param.key}`) && (
+                    <button
+                      type="button"
+                      onClick={() => {
+                        const origValue = originalCallRef.current?.parameters?.[paramKey];
+                        tryRestoreUrl(`param:${param.key}`);
+                        setParameters(prev => ({ ...prev, [paramKey]: origValue }));
+                        setDirtyFields(prev => { const s = new Set(prev); s.delete(`param:${param.key}`); return s; });
+                      }}
+                      className="text-xs text-gray-400 hover:text-gray-600 px-1.5 py-0.5 rounded border border-gray-200 hover:border-gray-400 transition-colors"
+                    >
+                      ↩ undo
+                    </button>
+                  )}
+                </div>
                 <div className="flex gap-2">
                   <button
                     type="button"

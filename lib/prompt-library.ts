@@ -1,12 +1,6 @@
 import crypto from 'crypto';
-import { db, promptLibrary } from '@/lib/db';
+import { db, promptLibrary, RequestMessage } from '@/lib/db';
 import { eq, sql } from 'drizzle-orm';
-
-export interface RequestMessage {
-  role: 'system' | 'assistant' | 'user';
-  text: string;
-  reasoning?: string;
-}
 
 export interface PromptEntry {
   systemPrompt: string;
@@ -73,7 +67,7 @@ export async function saveOrGetPrompt(entry: PromptEntry): Promise<{
       promptHash,
       systemPrompt: entry.systemPrompt,
       inputPrompt: entry.inputPrompt || null,
-      messages: entry.messages ? JSON.stringify(entry.messages) : null,
+      messages: entry.messages || null,
       usageCount: 1,
     })
     .returning({ id: promptLibrary.id });

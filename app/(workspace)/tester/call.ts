@@ -4,8 +4,8 @@ import { generateText, type ModelMessage } from 'ai';
 import { gateway, GatewayProviderOptions } from '@ai-sdk/gateway';
 import { getServerSession } from 'next-auth/next';
 import { authOptions } from '@/lib/auth';
-import { saveOrGetPrompt, type RequestMessage, generatePromptHash } from '@/lib/prompt-library';
-import { db, modelCalls } from '@/lib/db';
+import { saveOrGetPrompt, generatePromptHash } from '@/lib/prompt-library';
+import { db, modelCalls, RequestMessage } from '@/lib/db';
 import { eq } from 'drizzle-orm';
 
 export interface StoredCall {
@@ -14,6 +14,14 @@ export interface StoredCall {
   promptHash: string;
   result: string;
   rating: number | null;
+  parameters: {
+    maxOutputTokens?: number;
+    temperature?: number;
+    topP?: number;
+    topK?: number;
+    presencePenalty?: number;
+    frequencyPenalty?: number;
+  };
 }
 
 
@@ -166,12 +174,13 @@ export async function getCallById(id: number): Promise<StoredCall | null> {
       promptHash: modelCalls.promptHash,
       result: modelCalls.result,
       rating: modelCalls.rating,
+      parameters: modelCalls.parameters,
     })
     .from(modelCalls)
     .where(eq(modelCalls.id, id))
     .limit(1);
 
-  return result[0] ?? null;
+  return result[0] ? (result[0] as StoredCall) : null;
 }
 
 export async function updateModelCallRating(callId: number, rating: number): Promise<void> {

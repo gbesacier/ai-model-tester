@@ -28,6 +28,12 @@ export const modelProviders = pgTable("model_providers", {
   contextLength: integer("context_length").notNull(),
 });
 
+export interface RequestMessage {
+  role: 'system' | 'assistant' | 'user';
+  text: string;
+  reasoning?: string;
+}
+
 export const promptLibrary = pgTable(
   "prompt_library",
   {
@@ -35,7 +41,7 @@ export const promptLibrary = pgTable(
     promptHash: text("prompt_hash").notNull(),
     systemPrompt: text("system_prompt").notNull(),
     inputPrompt: text("input_prompt"),
-    messages: json("messages"),
+    messages: json("messages").$type<RequestMessage[]>(),
     usageCount: integer("usage_count").default(0).notNull(),
     created: timestamp("created").defaultNow().notNull(),
   },
