@@ -1,10 +1,119 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { ArrowDownAz, ArrowDown01, ChevronDown, ChevronRight, Edit2 } from 'lucide-react';
+import { ArrowDownAz, ArrowDown01, ChevronDown, ChevronRight, ChevronUp, Edit2 } from 'lucide-react';
 import Link from 'next/link';
 import { getModelCalls, getAvailableModelsForResults, getAvailablePromptsForResults, type ModelCallResult, type SortBy, type SortOrder } from './actions';
 import { styles } from '@/components/styles';
+
+function ClampedText({ text, label, expanded }: { text: string; label: string; expanded: boolean }) {
+  return (
+    <div>
+      <span className="text-xs font-medium text-gray-500 uppercase tracking-wide block mb-1">{label}</span>
+      <pre
+        className="text-xs text-gray-700 whitespace-pre-wrap wrap-break-word font-mono bg-gray-50 rounded p-2 border border-gray-200"
+        style={expanded ? undefined : { display: '-webkit-box', WebkitLineClamp: 4, WebkitBoxOrient: 'vertical', overflow: 'hidden' } as React.CSSProperties}
+      >
+        {text}
+      </pre>
+    </div>
+  );
+}
+
+function ClampedMessages({ messages, expanded }: { messages: { role: string; text: string }[]; expanded: boolean }) {
+  const preview = expanded ? messages : messages.slice(0, 2);
+  return (
+    <div>
+      <span className="text-xs font-medium text-gray-500 uppercase tracking-wide block mb-1">
+        Messages ({messages.length})
+      </span>
+      <div className="space-y-1">
+        {preview.map((msg, idx) => (
+          <div key={idx} className="bg-gray-50 rounded border border-gray-200 p-2 flex items-baseline gap-2">
+            <span className="text-xs font-mono bg-gray-200 px-1.5 py-0.5 rounded text-gray-600 shrink-0">
+              {msg.role}
+            </span>
+            <span
+              className="text-xs text-gray-700 font-mono min-w-0 break-words"
+              style={expanded ? undefined : { display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden' } as React.CSSProperties}
+            >
+              {msg.text}
+            </span>
+          </div>
+        ))}
+        {!expanded && messages.length > 2 && (
+          <span className="text-xs text-gray-400">+{messages.length - 2} more</span>
+        )}
+      </div>
+    </div>
+  );
+}
+
+function ResultCard({ call, formatDate }: { call: ModelCallResult; formatDate: (d: Date | null) => string }) {
+  const [expanded, setExpanded] = useState(false);
+  const params = Object.entries(call.parameters || {});
+  const hasMiddle = !!(call.inputPrompt || (call.messages && call.messages.length > 0));
+
+  return (
+    <div className="rounded-lg border border-gray-200 bg-white overflow-hidden hover:shadow-sm transition-shadow">
+      {/* Header */}
+      <div className="flex items-center gap-2 px-4 py-2 bg-gray-50 border-b border-gray-200 flex-wrap">
+        <span className="text-xs text-gray-400 shrink-0">{formatDate(call.created)}</span>
+        <span className="text-xs bg-gray-200 px-1.5 py-0.5 rounded text-gray-600 font-mono">{call.userEmail}</span>
+        <span className="text-xs font-medium text-gray-700">{call.modelName}</span>
+        <code className="text-xs font-mono text-gray-500 bg-gray-100 px-1.5 py-0.5 rounded">
+          {call.promptHash.slice(0, 8)}
+        </code>
+        {params.map(([k, v]) => (
+          <span key={k} className="text-xs bg-blue-50 text-blue-600 px-1.5 py-0.5 rounded font-mono">
+            {k}={v !== null && v !== undefined ? String(v) : '—'}
+          </span>
+        ))}
+        <div className="ml-auto flex items-center gap-1.5 shrink-0">
+          {call.rating !== null ? (
+            <span className="inline-flex items-center rounded-full bg-blue-100 px-2 py-0.5 text-xs font-medium text-blue-700">
+              ★ {call.rating}
+            </span>
+          ) : (
+            <span className="text-xs text-gray-400">—</span>
+          )}
+          <button
+            onClick={() => setExpanded((e) => !e)}
+            className="inline-flex items-center gap-1 rounded px-2 py-1 text-xs font-medium text-gray-600 border border-gray-300 bg-white hover:bg-gray-50"
+          >
+            {expanded ? <><ChevronUp size={12} />Less</> : <><ChevronDown size={12} />More</>}
+          </button>
+          <Link
+            href={`/tester?callId=${call.id}`}
+            className="inline-flex items-center gap-1 rounded px-2 py-1 text-xs font-medium text-white bg-blue-600 hover:bg-blue-700"
+          >
+            <Edit2 size={12} />
+            Edit
+          </Link>
+        </div>
+      </div>
+
+      {/* Body — always 3 cols when middle exists, else 2 */}
+      <div className={`grid divide-x divide-gray-200 ${hasMiddle ? 'grid-cols-3' : 'grid-cols-2'}`}>
+        <div className="p-3">
+          <ClampedText text={call.systemPrompt} label="System" expanded={expanded} />
+        </div>
+        {hasMiddle && (
+          <div className="p-3">
+            {call.messages && call.messages.length > 0 ? (
+              <ClampedMessages messages={call.messages} expanded={expanded} />
+            ) : (
+              <ClampedText text={call.inputPrompt!} label="Input" expanded={expanded} />
+            )}
+          </div>
+        )}
+        <div className="p-3">
+          <ClampedText text={call.result} label="Result" expanded={expanded} />
+        </div>
+      </div>
+    </div>
+  );
+}
 
 export default function ResultsTable() {
   const [calls, setCalls] = useState<ModelCallResult[]>([]);
@@ -22,6 +131,17 @@ export default function ResultsTable() {
   const [availablePrompts, setAvailablePrompts] = useState<
     { hash: string; systemPrompt: string; inputPrompt: string | null }[]
   >([]);
+
+  const formatDate = (d: Date | null): string => {
+    if (!d) return 'N/A';
+    return new Date(d).toLocaleDateString('en-US', {
+      year: 'numeric',
+      month: 'short',
+      day: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit',
+    });
+  };
 
   useEffect(() => {
     const loadData = async () => {
@@ -215,7 +335,7 @@ export default function ResultsTable() {
         </div>
       </div>
 
-      {/* Results Table */}
+      {/* Results Cards */}
       <div className={styles.container.sectionBase}>
         <label className={styles.label.base}>
           Results ({calls.length})
@@ -224,90 +344,10 @@ export default function ResultsTable() {
         {calls.length === 0 ? (
           <p className={styles.text.muted}>No results found</p>
         ) : (
-          <div className="overflow-x-auto">
-            <table className="w-full text-sm">
-              <thead>
-                <tr className="border-b-2 border-gray-300">
-                  <th className="text-left px-4 py-3 font-semibold text-gray-900">Date</th>
-                  <th className="text-left px-4 py-3 font-semibold text-gray-900">User</th>
-                  <th className="text-left px-4 py-3 font-semibold text-gray-900">Model</th>
-                  <th className="text-left px-4 py-3 font-semibold text-gray-900">Prompt</th>
-                  <th className="text-left px-4 py-3 font-semibold text-gray-900">Parameters</th>
-                  <th className="text-left px-4 py-3 font-semibold text-gray-900">Result</th>
-                  <th className="text-center px-4 py-3 font-semibold text-gray-900">Rating</th>
-                  <th className="text-center px-4 py-3 font-semibold text-gray-900">Actions</th>
-                </tr>
-              </thead>
-              <tbody>
-                {calls.map((call, idx) => (
-                  <tr
-                    key={call.id}
-                    className={`border-b border-gray-200 ${idx % 2 === 0 ? 'bg-gray-50' : 'bg-white'} hover:bg-blue-50`}
-                  >
-                    <td className="px-4 py-3 text-gray-700">
-                      {call.created ? new Date(call.created).toLocaleDateString('en-US', {
-                        year: 'numeric',
-                        month: 'short',
-                        day: 'numeric',
-                        hour: '2-digit',
-                        minute: '2-digit',
-                      }) : 'N/A'}
-                    </td>
-                    <td className="px-4 py-3 text-gray-700">
-                      <span className="text-xs bg-gray-200 px-2 py-1 rounded">{call.userEmail}</span>
-                    </td>
-                    <td className="px-4 py-3 text-gray-700">
-                      <span className="font-medium">{call.modelName}</span>
-                      <div className="text-xs text-gray-500">{call.modelId}</div>
-                    </td>
-                    <td className="px-4 py-3 text-gray-700">
-                      <div className="text-xs max-w-xs">
-                        <div className="font-medium mb-1">System:</div>
-                        <div className="truncate">{call.systemPrompt}</div>
-                        {call.inputPrompt && (
-                          <>
-                            <div className="font-medium mt-2 mb-1">Input:</div>
-                            <div className="truncate">{call.inputPrompt}</div>
-                          </>
-                        )}
-                      </div>
-                    </td>
-                    <td className="px-4 py-3 text-gray-700">
-                      <div className="text-xs space-y-1 max-w-xs">
-                        {Object.entries(call.parameters).map(([key, value]) => (
-                          <div key={key} className="text-gray-600">
-                            <span className="font-medium">{key}:</span> {value !== undefined && value !== null ? String(value) : '—'}
-                          </div>
-                        ))}
-                      </div>
-                    </td>
-                    <td className="px-4 py-3 text-gray-700">
-                      <div className="text-xs max-w-xs truncate" title={call.result}>
-                        {call.result}
-                      </div>
-                    </td>
-                    <td className="px-4 py-3 text-center">
-                      {call.rating !== null ? (
-                        <span className="inline-block px-3 py-1 rounded-lg bg-blue-100 text-blue-700 font-semibold">
-                          {call.rating}
-                        </span>
-                      ) : (
-                        <span className="text-gray-400">—</span>
-                      )}
-                    </td>
-                    <td className="px-4 py-3 text-center">
-                      <Link
-                        href={`/tester?callId=${call.id}`}
-                        className="inline-flex items-center gap-1 rounded-md bg-blue-100 text-blue-700 px-3 py-2 text-xs font-medium hover:bg-blue-200"
-                      >
-                        <Edit2 size={14} />
-                        Edit
-                      </Link>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
+          <div className="grid gap-3">
+            {calls.map((call) => (
+              <ResultCard key={call.id} call={call} formatDate={formatDate} />
+            ))}
           </div>
         )}
       </div>

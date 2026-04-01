@@ -13,6 +13,7 @@ export interface ModelCallResult {
   promptHash: string;
   systemPrompt: string;
   inputPrompt: string | null;
+  messages: { role: string; text: string }[] | null;
   parameters: Record<string, any>;
   result: string;
   rating: number | null;
@@ -58,6 +59,7 @@ export async function getModelCalls(
         promptHash: modelCalls.promptHash,
         systemPrompt: promptLibrary.systemPrompt,
         inputPrompt: promptLibrary.inputPrompt,
+        messages: promptLibrary.messages,
         parameters: modelCalls.parameters,
         result: modelCalls.result,
         rating: modelCalls.rating,
