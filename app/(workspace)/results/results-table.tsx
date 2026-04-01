@@ -1,17 +1,62 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { ArrowDownAz, ArrowDown01, ChevronDown, ChevronRight, Edit2 } from 'lucide-react';
+import { Listbox, ListboxButton, ListboxOptions, ListboxOption } from '@headlessui/react';
+import { ArrowDownAz, ArrowDown01, ChevronDown, Edit2, Filter } from 'lucide-react';
 import { CollapsedText, CollapsedMessages, ExpandToggleButton } from '@/components/prompt-display';
 import Link from 'next/link';
 import { getModelCalls, getAvailableModelsForResults, getAvailablePromptsForResults, type ModelCallResult, type SortBy, type SortOrder } from './actions';
 import { styles } from '@/components/styles';
 
 
-function ResultCard({ call, formatDate }: { call: ModelCallResult; formatDate: (d: Date | null) => string }) {
+interface ResultCardProps {
+  call: ModelCallResult;
+  formatDate: (d: Date | null) => string;
+  filterModelIds: string[];
+  setFilterModelIds: (ids: string[]) => void;
+  filterPromptHashes: string[];
+  setFilterPromptHashes: (hashes: string[]) => void;
+}
+
+function FilterPinButton({
+  active,
+  onClick,
+  title,
+}: {
+  active: boolean;
+  onClick: () => void;
+  title: string;
+}) {
+  return (
+    <button
+      onClick={onClick}
+      title={title}
+      className={`inline-flex items-center justify-center rounded p-0.5 transition-colors ${
+        active
+          ? 'text-blue-600 bg-blue-100 hover:bg-blue-200'
+          : 'text-gray-400 hover:text-blue-500 hover:bg-gray-100'
+      }`}
+    >
+      <Filter size={11} />
+    </button>
+  );
+}
+
+function ResultCard({ call, formatDate, filterModelIds, setFilterModelIds, filterPromptHashes, setFilterPromptHashes }: ResultCardProps) {
   const [expanded, setExpanded] = useState(false);
   const params = Object.entries(call.parameters || {});
   const hasMiddle = !!(call.inputPrompt || (call.messages && call.messages.length > 0));
+
+  const modelOnlyActive = filterModelIds.length === 1 && filterModelIds[0] === call.modelId;
+  const promptOnlyActive = filterPromptHashes.length === 1 && filterPromptHashes[0] === call.promptHash;
+
+  function toggleModelFilter() {
+    setFilterModelIds(modelOnlyActive ? [] : [call.modelId]);
+  }
+
+  function togglePromptFilter() {
+    setFilterPromptHashes(promptOnlyActive ? [] : [call.promptHash]);
+  }
 
   return (
     <div className={styles.card.container}>
@@ -19,10 +64,15 @@ function ResultCard({ call, formatDate }: { call: ModelCallResult; formatDate: (
       <div className={styles.card.header}>
         <span className="text-xs text-gray-400 shrink-0">{formatDate(call.created)}</span>
         <span className="text-xs bg-gray-200 px-1.5 py-0.5 rounded text-gray-600 font-mono">{call.userEmail}</span>
-        <span className="text-xs font-medium text-gray-700">{call.modelName}</span>
-        <code className={styles.card.hashBadge}>
-          {call.promptHash.slice(0, 8)}
-        </code>
+        <span className="inline-flex items-center gap-1">
+          <span className="text-xs font-medium text-gray-700">{call.modelName}</span>
+          <FilterPinButton active={modelOnlyActive} onClick={toggleModelFilter} title={modelOnlyActive ? 'Clear model filter' : 'Show only this model'} />
+        </span>
+        <span className="inline-flex items-center gap-1">
+          <span className="text-xs text-gray-400">prompt</span>
+          <code className={styles.card.hashBadge}>{call.promptHash.slice(0, 8)}</code>
+          <FilterPinButton active={promptOnlyActive} onClick={togglePromptFilter} title={promptOnlyActive ? 'Clear prompt filter' : 'Show only this prompt'} />
+        </span>
         {params.map(([k, v]) => (
           <span key={k} className="text-xs bg-blue-50 text-blue-600 px-1.5 py-0.5 rounded font-mono">
             {k}={v !== null && v !== undefined ? String(v) : '—'}
@@ -78,8 +128,6 @@ export default function ResultsTable() {
   const [sortOrder, setSortOrder] = useState<SortOrder>('desc');
   const [filterModelIds, setFilterModelIds] = useState<string[]>([]);
   const [filterPromptHashes, setFilterPromptHashes] = useState<string[]>([]);
-  const [showModelDropdown, setShowModelDropdown] = useState(false);
-  const [showPromptDropdown, setShowPromptDropdown] = useState(false);
 
   const [availableModels, setAvailableModels] = useState<{ id: string; name: string }[]>([]);
   const [availablePrompts, setAvailablePrompts] = useState<
@@ -181,110 +229,88 @@ export default function ResultsTable() {
           </div>
 
           {/* Filter by Models */}
-          <div className="space-y-2 relative">
+          <div className="space-y-2">
             <label className={styles.label.small}>
               Models {filterModelIds.length > 0 && <span className="text-blue-600 font-semibold">({filterModelIds.length})</span>}
             </label>
-            <button
-              onClick={() => setShowModelDropdown(!showModelDropdown)}
-              className={`${styles.input.base} w-full text-left flex items-center justify-between`}
-            >
-              <span>{filterModelIds.length > 0 ? `${filterModelIds.length} selected` : 'All Models'}</span>
-              {showModelDropdown ? <ChevronDown size={16} /> : <ChevronRight size={16} />}
-            </button>
-            {showModelDropdown && (
-              <div className="absolute top-full left-0 right-0 mt-1 bg-white border border-gray-300 rounded shadow-lg z-50 max-h-48 overflow-y-auto">
+            <Listbox multiple value={filterModelIds} onChange={setFilterModelIds}>
+              <ListboxButton className={`${styles.input.base} w-full text-left flex items-center justify-between`}>
+                <span>{filterModelIds.length > 0 ? `${filterModelIds.length} selected` : 'All Models'}</span>
+                <ChevronDown size={16} />
+              </ListboxButton>
+              <ListboxOptions anchor="bottom" className=" w-(--button-width) z-50 mt-1 bg-white border border-gray-300 rounded shadow-lg max-h-48 overflow-y-auto">
                 <div className="p-2 border-b border-gray-200 flex gap-2 sticky top-0 bg-white">
                   <button
-                    onClick={() => setFilterModelIds(availableModels.map((m) => m.id))}
+                    onClick={(e) => { e.preventDefault(); setFilterModelIds(availableModels.map((m) => m.id)); }}
                     className="text-xs px-2 py-1 bg-blue-100 text-blue-700 rounded hover:bg-blue-200"
                   >
                     All
                   </button>
                   <button
-                    onClick={() => setFilterModelIds([])}
+                    onClick={(e) => { e.preventDefault(); setFilterModelIds([]); }}
                     className="text-xs px-2 py-1 bg-gray-100 text-gray-700 rounded hover:bg-gray-200"
                   >
                     None
                   </button>
                 </div>
                 {availableModels.map((model) => (
-                  <label
+                  <ListboxOption
                     key={model.id}
-                    className="flex items-center gap-2 px-4 py-2 hover:bg-gray-50 cursor-pointer"
+                    value={model.id}
+                    className="group flex items-center gap-2 px-4 py-2 hover:bg-gray-50 cursor-pointer"
                   >
-                    <input
-                      type="checkbox"
-                      checked={filterModelIds.includes(model.id)}
-                      onChange={(e) => {
-                        if (e.target.checked) {
-                          setFilterModelIds([...filterModelIds, model.id]);
-                        } else {
-                          setFilterModelIds(filterModelIds.filter((id) => id !== model.id));
-                        }
-                      }}
-                      className="w-4 h-4"
-                    />
+                    <span className="w-4 h-4 border border-gray-300 rounded flex items-center justify-center group-data-selected:bg-blue-600 group-data-selected:border-blue-600 shrink-0">
+                      <span className="hidden group-data-selected:block text-white text-xs leading-none">✓</span>
+                    </span>
                     <span className="text-sm">{model.name}</span>
-                  </label>
+                  </ListboxOption>
                 ))}
-              </div>
-            )}
+              </ListboxOptions>
+            </Listbox>
           </div>
 
           {/* Filter by Prompts */}
-          <div className="space-y-2 relative">
+          <div className="space-y-2">
             <label className={styles.label.small}>
               Prompts {filterPromptHashes.length > 0 && <span className="text-blue-600 font-semibold">({filterPromptHashes.length})</span>}
             </label>
-            <button
-              onClick={() => setShowPromptDropdown(!showPromptDropdown)}
-              className={`${styles.input.base} w-full text-left flex items-center justify-between`}
-            >
-              <span>{filterPromptHashes.length > 0 ? `${filterPromptHashes.length} selected` : 'All Prompts'}</span>
-              {showPromptDropdown ? <ChevronDown size={16} /> : <ChevronRight size={16} />}
-            </button>
-            {showPromptDropdown && (
-              <div className="absolute top-full left-0 right-0 mt-1 bg-white border border-gray-300 rounded shadow-lg z-50 max-h-48 overflow-y-auto">
+            <Listbox multiple value={filterPromptHashes} onChange={setFilterPromptHashes}>
+              <ListboxButton className={`${styles.input.base} w-full text-left flex items-center justify-between`}>
+                <span>{filterPromptHashes.length > 0 ? `${filterPromptHashes.length} selected` : 'All Prompts'}</span>
+                <ChevronDown size={16} />
+              </ListboxButton>
+              <ListboxOptions anchor="bottom" className=" w-(--button-width) z-50 mt-1 bg-white border border-gray-300 rounded shadow-lg max-h-48 overflow-y-auto">
                 <div className="p-2 border-b border-gray-200 flex gap-2 sticky top-0 bg-white">
                   <button
-                    onClick={() => setFilterPromptHashes(availablePrompts.map((p) => p.hash))}
+                    onClick={(e) => { e.preventDefault(); setFilterPromptHashes(availablePrompts.map((p) => p.hash)); }}
                     className="text-xs px-2 py-1 bg-blue-100 text-blue-700 rounded hover:bg-blue-200"
                   >
                     All
                   </button>
                   <button
-                    onClick={() => setFilterPromptHashes([])}
+                    onClick={(e) => { e.preventDefault(); setFilterPromptHashes([]); }}
                     className="text-xs px-2 py-1 bg-gray-100 text-gray-700 rounded hover:bg-gray-200"
                   >
                     None
                   </button>
                 </div>
                 {availablePrompts.map((prompt) => (
-                  <label
+                  <ListboxOption
                     key={prompt.hash}
-                    className="flex items-center gap-2 px-4 py-2 hover:bg-gray-50 cursor-pointer"
+                    value={prompt.hash}
+                    className="group flex items-center gap-2 px-4 py-2 hover:bg-gray-50 cursor-pointer"
                   >
-                    <input
-                      type="checkbox"
-                      checked={filterPromptHashes.includes(prompt.hash)}
-                      onChange={(e) => {
-                        if (e.target.checked) {
-                          setFilterPromptHashes([...filterPromptHashes, prompt.hash]);
-                        } else {
-                          setFilterPromptHashes(filterPromptHashes.filter((h) => h !== prompt.hash));
-                        }
-                      }}
-                      className="w-4 h-4"
-                    />
-                    <span className="text-sm truncate max-w-xs">
-                      {prompt.systemPrompt.substring(0, 50)}
-                      {prompt.systemPrompt.length > 50 ? '...' : ''}
+                    <span className="w-4 h-4 border border-gray-300 rounded flex items-center justify-center group-data-selected:bg-blue-600 group-data-selected:border-blue-600 shrink-0">
+                      <span className="hidden group-data-selected:block text-white text-xs leading-none">✓</span>
                     </span>
-                  </label>
+                    <div className="flex flex-col min-w-0">
+                      <span className="text-xs font-mono text-gray-400">{prompt.hash.slice(0, 8)}</span>
+                      <span className="text-sm truncate">{prompt.systemPrompt.substring(0, 60)}{prompt.systemPrompt.length > 60 ? '…' : ''}</span>
+                    </div>
+                  </ListboxOption>
                 ))}
-              </div>
-            )}
+              </ListboxOptions>
+            </Listbox>
           </div>
         </div>
       </div>
@@ -300,7 +326,15 @@ export default function ResultsTable() {
         ) : (
           <div className="grid gap-3">
             {calls.map((call) => (
-              <ResultCard key={call.id} call={call} formatDate={formatDate} />
+              <ResultCard
+                key={call.id}
+                call={call}
+                formatDate={formatDate}
+                filterModelIds={filterModelIds}
+                setFilterModelIds={setFilterModelIds}
+                filterPromptHashes={filterPromptHashes}
+                setFilterPromptHashes={setFilterPromptHashes}
+              />
             ))}
           </div>
         )}
